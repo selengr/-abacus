@@ -12,16 +12,63 @@ const Plus: FC = () => {
 
     const [doCounting, setDoCounting] = useState<Verifycount>( {count : 0} )
 
+    const dataCell: number[] = [
+        1,
+         2, 3, 4, 5, 6, 7
+    ]
+
+   
+
+
+   
+
+    return (
+        <>
+            <div className={styles.container}>
+
+                {
+                    dataCell.reverse().map((item, index) => {
+                        return <div >
+                            <Unit w={index} />
+                            <span id={`last-count${index}`}>{doCounting.count}</span>
+                            {/* {unit(1)}
+                            <span id={`last-count${1}`}>{doCounting.count}</span>
+                            {unit(2)}
+                            <span id={`last-count${2}`}>{doCounting.count}</span>
+                            {unit(3)}
+                            <span id={`last-count${3}`}>{doCounting.count}</span>
+                            {unit(4)}
+                            <span id={`last-count${4}`}>{doCounting.count}</span>
+                            {unit(5)}
+                            <span id={`last-count${5}`}>{doCounting.count}</span>
+                            {unit(6)}
+                            <span id={`last-count${6}`}>{doCounting.count}</span>
+                            {unit(7)}
+                            <span id={`last-count${7}`}>{doCounting.count}</span> */}
+                           
+                        </div>
+                     })
+                 }
+
+            </div>
+        </>
+    );
+};
+
+export default Plus;
+
+
+
+
+const Unit = ({w }) => {
+
+
     let one: string | NodeListOf<Element>,
         two: string | NodeListOf<Element>,
         three: string | NodeListOf<Element>,
         four: string | NodeListOf<Element>,
         five: string | NodeListOf<Element>
 
-    const dataCell: number[] = [
-        1,
-         2, 3, 4, 5, 6, 7
-    ]
 
     useEffect(() => {
 
@@ -39,144 +86,159 @@ const Plus: FC = () => {
     }, [])
 
 
-    let light: string | number
-    let heavy: number 
-    let total: number | string
     
-    const validations = (e: React.ChangeEvent<HTMLInputElement>, which: number, number: number, high: number) => {
-        
+let light: string | number
+let total: number | string
+let heavy : number | string  
 
-        if (e.target.classList.contains("active-number")) {
+const validations = (e: React.ChangeEvent<HTMLInputElement>, which: number, number: number | string, high: number) => {
+    
 
-            e.target.classList.remove("active-number")
-            if (number !== 5) {
-                light = number - 1
-            }
-            if (high) {
-                heavy -= high
-            }
-            if (isNaN(heavy)) heavy = 0 
+    // if(heavy !== 0 || heavy !== undefined){
+    //     heavy = heavy
+    // }
+    // if (e.target.classList.contains("active-number")) {
 
-        } else {
+    //     e.target.classList.remove("active-number")
+    //     if (number !== 'not') {
+    //         light = number - 1
+    //     }
+    //     if (high) {
+    //         heavy -= high
+    //     }
+    //     if (isNaN(heavy)) heavy = 0 
 
-            e.target.classList.add("active-number")
-            if (number !== 5) {
-                light = number
-                heavy = high
-            }
-            if (high) {
-                heavy = high
-            }
-            if (isNaN(heavy)) heavy = 0      
+    // } else {
 
-        }
+    //     e.target.classList.add("active-number")
+    //     if (number !== 'not') {
+    //         light = number
+    //         heavy = heavy
+    //     }
+    //     if (high) {
+    //         heavy = high
+    //         light = light
+    //     }
+    
+    // }
+        if (isNaN(heavy)) heavy = 0      
+    light = light === undefined ? 0 : light
 
-        light = light === undefined ? 0 : light
-// console.log("esdaff",light)
-        total = heavy + light 
-        console.log("total", heavy)
-        
-        let data = (e.target.id.slice(-1))
-        // setDoCounting({count : total})
-        let check = document.querySelector(`#last-count${data}`) 
-        check.innerHTML = total
-        // Array.from(four);
-   
-        // 
-        if (e.target.id == `four${which}`) {
-            if (four[parseInt(data)].style.bottom == "144px") {
-                four[parseInt(data)].style.bottom = "108px"
-                three[parseInt(data)].style.bottom = "72px"
-                two[parseInt(data)].style.bottom = "36px"
-                one[parseInt(data)].style.bottom = "0px"
-                return
-            }
+// console.log("heavy + light ",heavy , light )
+
+let data = (e.target.id.slice(-1))
+// setDoCounting({count : total})
+
+    // Array.from(four);
+
+    // 
+    // heavy =  heavy
+    if (e.target.id == `four${which}`) {
+        if (four[parseInt(data)].style.bottom == "144px") {
+            four[parseInt(data)].style.bottom = "108px"
+            three[parseInt(data)].style.bottom = "72px"
+            two[parseInt(data)].style.bottom = "36px"
+            one[parseInt(data)].style.bottom = "0px"
+            light = number - 1
+            
+        }else {
             four[parseInt(data)].style.bottom = "144px"
+            light = number 
+            heavy =  heavy
         }
-        if (e.target.id == `three${which}`) {
-            if (three[parseInt(data)].style.bottom == "108px") {
-                three[parseInt(data)].style.bottom = "72px"
-                two[parseInt(data)].style.bottom = "36px"
-                one[parseInt(data)].style.bottom = "0px"
-                return
-            }
-
-            four[parseInt(data)].style.bottom = "144px"
-            three[parseInt(data)].style.bottom = "108px"
+      
+    }
+    if (e.target.id == `three${which}`) {
+        if (three[parseInt(data)].style.bottom == "108px") {
+            three[parseInt(data)].style.bottom = "72px"
+            two[parseInt(data)].style.bottom = "36px"
+            one[parseInt(data)].style.bottom = "0px"
+            light = number - 1
+            
+        }else{
+            
+        four[parseInt(data)].style.bottom = "144px"
+        three[parseInt(data)].style.bottom = "108px"
+        heavy =  heavy
+        light = number 
         }
-        if (e.target.id == `two${which}`) {
+        
+    }
+    if (e.target.id == `two${which}`) {
 
 
-            if (two[parseInt(data)].style.bottom == "72px") {
-                two[parseInt(data)].style.bottom = "36px"
-                one[parseInt(data)].style.bottom = "0px"
-                return
-            }
+        if (two[parseInt(data)].style.bottom == "72px") {
+            two[parseInt(data)].style.bottom = "36px"
+            one[parseInt(data)].style.bottom = "0px"
+            light = number - 1
+        }else{
             four[parseInt(data)].style.bottom = "144px"
             three[parseInt(data)].style.bottom = "108px"
             two[parseInt(data)].style.bottom = "72px"
+            heavy =  heavy
+            light = number 
         }
-        if (e.target.id == `one${which}`) {
+       
+    }
+    if (e.target.id == `one${which}`) {
 
-            if (one[parseInt(data)].style.bottom == "36px") {
-                one[parseInt(data)].style.bottom = "0px"
-                return
-            }
+        if (one[parseInt(data)].style.bottom == "36px") {
+            one[parseInt(data)].style.bottom = "0px"
+            
+            light = number - 1
+            
+        }else {
             four[parseInt(data)].style.bottom = "144px"
-            three[parseInt(data)].style.bottom = "108px"
-            two[parseInt(data)].style.bottom = "72px"
-            one[parseInt(data)].style.bottom = "36px"
+        three[parseInt(data)].style.bottom = "108px"
+        two[parseInt(data)].style.bottom = "72px"
+        one[parseInt(data)].style.bottom = "36px"
+        heavy =  heavy
+        light = number 
         }
+        
+    }
 
-        if (e.target.id === `five${which}`) {
-            if (five[parseInt(data)].style.top == "36px") {
-                five[parseInt(data)].style.top = "0px"
-                return
-            }
+    if (e.target.id === `five${which}`) {
+        if (five[parseInt(data)].style.top == "36px") {
+            five[parseInt(data)].style.top = "0px"
+            heavy = 0 
+            
+        }else {
             five[parseInt(data)].style.top = "36px"
+            heavy = high
         }
-
     }
 
 
-    const unit = (w: number) => {
-        const move = (e: any, which: number, number: string | number, high?: number) => validations(e, which, number, high)
+    console.log( "heavy + light ", heavy , light )
+    
+    total = heavy + light 
+    let check = document.querySelector(`#last-count${data}`) 
+    check.innerHTML = total
 
-        return (
-            <div className={styles.pack}>
-                <div onClick={(e) => move(e, w, 5)} data-id={`five${w}`} id={`five${w}`} className={`${styles.nut} five`}> </div>
-
-                <div className={styles.pipe}>
-                    <div></div>
-                </div>
-
-                <div onClick={(e) => move(e, w, 1)} data-id={`four`} id={`four${w}`} className={`${styles.nut} four`}> </div>
-                <div onClick={(e) => move(e, w, 2)} data-id={`three`} id={`three${w}`} className={`${styles.nut} three`}> </div>
-                <div onClick={(e) => move(e, w, 3)} data-id={`two`} id={`two${w}`} className={`${styles.nut} two`}> </div>
-                <div onClick={(e) => move(e, w, 4)} data-id={`one`} id={`one${w}`} className={`${styles.nut} one`}> </div>
+}
 
 
-            </div>
-        )
-    }
+// const unit = (w: number) => {
+    const move = (e: any, which: number, number: string | number, high?: number) => validations(e, which, number, high)
 
 
     return (
-        <>
-            <div className={styles.container}>
+        <div className={styles.pack}>
+            <div onClick={(e) => move(e, w, "not", 5)} data-id={`five${w}`} id={`five${w}`} className={`${styles.nut} five`}> </div>
 
-                {
-                    dataCell.reverse().map((item, index) => {
-                        return <div key={index.toString()}>
-                            {unit(index)}
-                            <span id={`last-count${index}`}>{doCounting.count}</span>
-                        </div>
-                    })
-                }
 
-            </div>
-        </>
-    );
-};
+            <div onClick={(e) => move(e, w, 1)} data-id={`four`} id={`four${w}`} className={`${styles.nut} four`}> </div>
+            <div onClick={(e) => move(e, w, 2)} data-id={`three`} id={`three${w}`} className={`${styles.nut} three`}> </div>
+            <div onClick={(e) => move(e, w, 3)} data-id={`two`} id={`two${w}`} className={`${styles.nut} two`}> </div>
+            <div onClick={(e) => move(e, w, 4)} data-id={`one`} id={`one${w}`} className={`${styles.nut} one`}> </div>
 
-export default Plus;
+        </div>
+    )
+// }
+
+
+
+}
+
+export { Unit }

@@ -15,9 +15,6 @@ const Abacus : NextPage = () => {
   }, [])
 
 
-
-
-
   return (
     <>
       <Plus />
