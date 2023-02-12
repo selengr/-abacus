@@ -1,6 +1,6 @@
 import type { NextPage } from "next";
 import { useEffect, useState } from "react";
-import Plus from "../../app/components/abacus/plus";
+import Plus from "../../app/abacus/plus";
 
 interface RegisterformValues { }
 

@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+
 html,
 body {
   padding: 0;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-  direction: rtl;
 }
 
 a {
@@ -27,13 +27,5 @@ a {
   body {
     color: white;
     background: black;
-  }
-}
-
-
-
-@layer components {
-  .btn-primary {
-    @apply border-0 p-2 px-6 bg-slate-100 rounded-md;
   }
 }

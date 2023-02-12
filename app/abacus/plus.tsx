@@ -1,5 +1,6 @@
-import styles from "../../../styles/abacus/Abacus.module.css";
+import styles from "../../styles/abacus/Abacus.module.css";
 import { useEffect, useState, FC } from "react";
+import { setInterval } from "timers";
 
 
 interface RegisterformValues { }
@@ -9,7 +10,7 @@ interface Verifycount {
 
 const Plus: FC = () => {
 
-    const [doCounting, setDoCounting] = useState<Verifycount>({ count: 0 })
+    const [doCounting, setDoCounting] = useState<Verifycount>( {count : 0} )
 
     let one: string | NodeListOf<Element>,
         two: string | NodeListOf<Element>,
@@ -18,7 +19,8 @@ const Plus: FC = () => {
         five: string | NodeListOf<Element>
 
     const dataCell: number[] = [
-        1, 2, 3, 4, 5, 6, 7
+        1,
+         2, 3, 4, 5, 6, 7
     ]
 
     useEffect(() => {
@@ -37,21 +39,49 @@ const Plus: FC = () => {
     }, [])
 
 
-    let num : string | number
-    const validations = (e :  React.ChangeEvent<HTMLInputElement>, which : number, number : string, high : number) => {
-        if (number !== 'not') {
-            num = high && high + number
-            num = number !== "not" ? number : num
-            console.log("num", num)
+    let light: string | number
+    let heavy: number 
+    let total: number | string
+    
+    const validations = (e: React.ChangeEvent<HTMLInputElement>, which: number, number: number, high: number) => {
+        
+
+        if (e.target.classList.contains("active-number")) {
+
+            e.target.classList.remove("active-number")
+            if (number !== 5) {
+                light = number - 1
+            }
+            if (high) {
+                heavy -= high
+            }
+            if (isNaN(heavy)) heavy = 0 
+
+        } else {
+
+            e.target.classList.add("active-number")
+            if (number !== 5) {
+                light = number
+                heavy = high
+            }
+            if (high) {
+                heavy = high
+            }
+            if (isNaN(heavy)) heavy = 0      
+
         }
 
-        if (high) {
-            console.log(parseInt(num) + high)
-        }
-
+        light = light === undefined ? 0 : light
+// console.log("esdaff",light)
+        total = heavy + light 
+        console.log("total", heavy)
+        
         let data = (e.target.id.slice(-1))
-        Array.from(four);
-
+        // setDoCounting({count : total})
+        let check = document.querySelector(`#last-count${data}`) 
+        check.innerHTML = total
+        // Array.from(four);
+   
         // 
         if (e.target.id == `four${which}`) {
             if (four[parseInt(data)].style.bottom == "144px") {
@@ -75,6 +105,8 @@ const Plus: FC = () => {
             three[parseInt(data)].style.bottom = "108px"
         }
         if (e.target.id == `two${which}`) {
+
+
             if (two[parseInt(data)].style.bottom == "72px") {
                 two[parseInt(data)].style.bottom = "36px"
                 one[parseInt(data)].style.bottom = "0px"
@@ -103,18 +135,19 @@ const Plus: FC = () => {
             }
             five[parseInt(data)].style.top = "36px"
         }
+
     }
 
 
-    const unit = (w : number) => {
-        const move = (e : any, which :number, number : string|number, high? : number) => validations(e, which, number, high)
+    const unit = (w: number) => {
+        const move = (e: any, which: number, number: string | number, high?: number) => validations(e, which, number, high)
 
         return (
             <div className={styles.pack}>
-                <div onClick={(e) => move(e, w, "not", 5)} data-id={`five${w}`} id={`five${w}`} className={`${styles.nut} five`}> </div>
+                <div onClick={(e) => move(e, w, 5)} data-id={`five${w}`} id={`five${w}`} className={`${styles.nut} five`}> </div>
 
                 <div className={styles.pipe}>
-                    {/* <div></div> */}
+                    <div></div>
                 </div>
 
                 <div onClick={(e) => move(e, w, 1)} data-id={`four`} id={`four${w}`} className={`${styles.nut} four`}> </div>
@@ -134,9 +167,9 @@ const Plus: FC = () => {
 
                 {
                     dataCell.reverse().map((item, index) => {
-                        return <div>
+                        return <div key={index.toString()}>
                             {unit(index)}
-                            <span>{doCounting.count}</span>
+                            <span id={`last-count${index}`}>{doCounting.count}</span>
                         </div>
                     })
                 }
