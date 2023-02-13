@@ -1,50 +1,86 @@
 import styles from "../../styles/abacus/Abacus.module.css";
 import { useEffect, useState, FC } from "react";
-import { setInterval } from "timers";
 
 
 interface RegisterformValues { }
 interface Verifycount {
     count: number;
+    row : number
 }
 
 const Plus: FC = () => {
 
     const [doCounting, setDoCounting] = useState<Verifycount>( {count : 0} )
+    // const [counterState, updateCounterState] = useState( 0 )
 
     const dataCell: number[] = [
-        1,
-         2, 3, 4, 5, 6, 7
+        1, 2, 3, 4, 5, 6, 7
     ]
 
+  let first_num
+  let second_num 
+  let sum
+  
+//   useEffect(()=>{
    
+//   },[])
 
+  rendomData()
+  function rendomData  ()  {debugger
+     first_num = Math.floor(Math.random()*99 )
+     second_num = Math.floor(Math.random()*99 )
+     sum = first_num + second_num
+  }
 
-   
+  let conclude : [number] = [0,0,0,0,0,0,0]
+ 
+  let list : [{w:number | undefined, val:number | undefined}]  = []
+  const doset  = async (val : number, w : number)   => {
+      let flag = true
+
+        Array.isArray(list)
+        list.map((item,index ) => {
+          if ( item.w === w  ) {
+              list[index] = { w , val }
+              flag = false
+            }  
+        })
+        if (flag) list.push({w , val})
+
+    
+            let e = Math.pow(10, w);
+            conclude[w] = ( val * e)    
+            
+           let concludeSum = 0
+            conclude.map(item => {
+                concludeSum += item
+            })
+            if(concludeSum === sum ) {
+            // alert("well done  that set")
+            let b = await rendomData()
+
+            }
+        console.log("conclude",conclude)
+        console.log("concludeSum",concludeSum)
+     
+
+  }
 
     return (
         <>
-            <div className={styles.container}>
+<div>
+</div>
+<span>{first_num}===+===</span>
 
+    <span>{second_num}===+===</span>
+    <span>{sum}</span>
+            <div className={styles.container}>
                 {
                     dataCell.reverse().map((item, index) => {
                         return <div >
-                            <Unit w={index} />
+
+                            <Unit w={index} doset={(val,w)=>doset(val , w)} />
                             <span id={`last-count${index}`}>{doCounting.count}</span>
-                            {/* {unit(1)}
-                            <span id={`last-count${1}`}>{doCounting.count}</span>
-                            {unit(2)}
-                            <span id={`last-count${2}`}>{doCounting.count}</span>
-                            {unit(3)}
-                            <span id={`last-count${3}`}>{doCounting.count}</span>
-                            {unit(4)}
-                            <span id={`last-count${4}`}>{doCounting.count}</span>
-                            {unit(5)}
-                            <span id={`last-count${5}`}>{doCounting.count}</span>
-                            {unit(6)}
-                            <span id={`last-count${6}`}>{doCounting.count}</span>
-                            {unit(7)}
-                            <span id={`last-count${7}`}>{doCounting.count}</span> */}
                            
                         </div>
                      })
@@ -58,10 +94,11 @@ const Plus: FC = () => {
 export default Plus;
 
 
+// ================================================================================the second one
 
+const Unit = ({ w , doset }) => {
 
-const Unit = ({w }) => {
-
+    const [doCounting, set] = useState<Verifycount>()
 
     let one: string | NodeListOf<Element>,
         two: string | NodeListOf<Element>,
@@ -86,7 +123,7 @@ const Unit = ({w }) => {
     }, [])
 
 
-    
+   
 let light: string | number
 let total: number | string
 let heavy : number | string  
@@ -94,45 +131,11 @@ let heavy : number | string
 const validations = (e: React.ChangeEvent<HTMLInputElement>, which: number, number: number | string, high: number) => {
     
 
-    // if(heavy !== 0 || heavy !== undefined){
-    //     heavy = heavy
-    // }
-    // if (e.target.classList.contains("active-number")) {
-
-    //     e.target.classList.remove("active-number")
-    //     if (number !== 'not') {
-    //         light = number - 1
-    //     }
-    //     if (high) {
-    //         heavy -= high
-    //     }
-    //     if (isNaN(heavy)) heavy = 0 
-
-    // } else {
-
-    //     e.target.classList.add("active-number")
-    //     if (number !== 'not') {
-    //         light = number
-    //         heavy = heavy
-    //     }
-    //     if (high) {
-    //         heavy = high
-    //         light = light
-    //     }
-    
-    // }
-        if (isNaN(heavy)) heavy = 0      
+    if (isNaN(heavy)) heavy = 0      
     light = light === undefined ? 0 : light
+    let data = (e.target.id.slice(-1))
 
-// console.log("heavy + light ",heavy , light )
 
-let data = (e.target.id.slice(-1))
-// setDoCounting({count : total})
-
-    // Array.from(four);
-
-    // 
-    // heavy =  heavy
     if (e.target.id == `four${which}`) {
         if (four[parseInt(data)].style.bottom == "144px") {
             four[parseInt(data)].style.bottom = "108px"
@@ -214,20 +217,17 @@ let data = (e.target.id.slice(-1))
     
     total = heavy + light 
     let check = document.querySelector(`#last-count${data}`) 
+    doset(total,which)
     check.innerHTML = total
 
 }
 
 
-// const unit = (w: number) => {
     const move = (e: any, which: number, number: string | number, high?: number) => validations(e, which, number, high)
-
 
     return (
         <div className={styles.pack}>
             <div onClick={(e) => move(e, w, "not", 5)} data-id={`five${w}`} id={`five${w}`} className={`${styles.nut} five`}> </div>
-
-
             <div onClick={(e) => move(e, w, 1)} data-id={`four`} id={`four${w}`} className={`${styles.nut} four`}> </div>
             <div onClick={(e) => move(e, w, 2)} data-id={`three`} id={`three${w}`} className={`${styles.nut} three`}> </div>
             <div onClick={(e) => move(e, w, 3)} data-id={`two`} id={`two${w}`} className={`${styles.nut} two`}> </div>
@@ -235,10 +235,6 @@ let data = (e.target.id.slice(-1))
 
         </div>
     )
-// }
-
-
-
 }
 
 export { Unit }
