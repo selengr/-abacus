@@ -72,23 +72,22 @@
          /* background-color: #f6cd61 ; */
          background-color: var(	--material-color-black);
          height: 100%;
-         width: 4px;
+         width: 2px;
          position: absolute;
-         left: 45%;
+         /* left: 45%; */
          top: 0;
          /* display: flex; */
          /* justify-content: center; */  
   }
 
-  .pipe :first-child {
-         /* background-color: #f6cd61; */
+  /* .pipe :first-child {
          background-color: var(	--material-color-black);
          margin-top: 75px;
          height: 5px;
          width: 100%;
          position: absolute;
          left: -31px;
-  }
+  } */
 
   .nut {
     /* background-color:  #fe8a71; */
