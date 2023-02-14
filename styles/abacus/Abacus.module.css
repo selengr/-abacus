@@ -1,20 +1,51 @@
+.mainPlus {
+	--material-color-yellow: #f6cd61;
+	--material-color-black: black;
+	--material-color-blue-500: #2ab7ca;
+	--material-color-black-200: rgba(0,0,0,.2);
+  --material-color-red-400: #fe4a49;
+  
+  
+}
+
+
+.mainPlus {
+  min-width: 415px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+
+.suggestNumber {
+  width: 100%;
+  display: flex;
+    justify-content: center;
+    margin-bottom: 0;
+}
+
 .container {
-    /* padding: 0 2rem;
-    width: 100vw; */
+    /* padding: 0 2rem;*/
+    width: 100vw; 
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    direction: rtl
-    /* background-color: #fe4a49 !important */
+    direction: rtl;
+    min-width: 415px;
+    max-width: 800px;
+    /* background-color:  var(--material-color-yellow) */
     /* background-color: #e6e6ea */
     ;
   }
 .container >div {
   /* background-color: #e6e6ea; */
-  background-color: black;
+  /* background-color: black; */
   /* display: flex; */
   /* justify-content: center; */
+  width: 15%;
+  min-width: 60px;
   }
 .container >div >span{
   color: #ffffff;
@@ -26,20 +57,20 @@
 
   .pack {
     height: 270px;
-    width: 68px;
+    width: 100%;
     display: flex;
          justify-content: center;
          align-items: center;
          position: relative;
          
          flex-direction: column;
-         background-color: #f6cd61;
+         background-color: var(--material-color-yellow);
          padding-bottom: 5px;
   }
 
   .pipe {
          /* background-color: #f6cd61 ; */
-         background-color: black;
+         background-color: var(	--material-color-black);
          height: 100%;
          width: 4px;
          position: absolute;
@@ -51,19 +82,20 @@
 
   .pipe :first-child {
          /* background-color: #f6cd61; */
-         background-color: black;
+         background-color: var(	--material-color-black);
          margin-top: 75px;
          height: 5px;
-         width: 70px;
+         width: 100%;
          position: absolute;
          left: -31px;
   }
 
   .nut {
     /* background-color:  #fe8a71; */
-    background-color:   #2ab7ca ;
+    background-color:   var(--material-color-blue-500) ;
     height: 35px;
-    width: 65px;
+    min-width: 45px;
+    width: 90%;
     display: flex;
     border-radius: 15px;
     z-index: 1;
@@ -73,6 +105,11 @@
    position: absolute;
    bottom: 0;
   }
+
+  .counter {
+    margin-top: 8px;
+    background-color: var(--material-color-black-200)
+  }
   .nut:active {
-    background-color:   #fe4a49
+    background-color: var(--material-color-red-400)
   }

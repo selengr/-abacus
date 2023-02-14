@@ -1,6 +1,7 @@
 import type { NextPage } from "next";
 import { useEffect, useState } from "react";
 import Plus from "../../app/abacus/plus";
+import styles from "../../styles/abacus/Abacus.module.css";
 
 interface RegisterformValues { }
 
@@ -16,9 +17,9 @@ const Abacus : NextPage = () => {
 
 
   return (
-    <>
-      <Plus />
-    </>
+    <div className={styles.mainPlus}>
+       <Plus />
+    </div>
   );
 };
 
