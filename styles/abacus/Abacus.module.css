@@ -1,9 +1,13 @@
 .mainPlus {
-	--material-color-yellow: #f6cd61;
-	--material-color-black: black;
-	--material-color-blue-500: #2ab7ca;
-	--material-color-black-200: rgba(0,0,0,.2);
-  --material-color-red-400: #fe4a49;
+	/* --material-color-yellow: #f6cd61; */
+	--material-color-yellow: #333652;
+	/* --material-color-black: black; */
+	--material-color-black: #e9eaec;
+	/* --material-color-blue-500: #2ab7ca; */
+	--material-color-blue-500: #fad02c;
+	--material-color-black-200: #90adc6;
+  /* --material-color-red-400: #fe4a49; */
+  --material-color-red-400: #282120;
   
   
 }
