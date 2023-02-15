@@ -24,11 +24,18 @@
     justify-content: center;
     margin-bottom: 0;
 }
+.wood {
+  display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100vh;
+}
 
 .container {
     /* padding: 0 2rem;*/
     width: 100vw; 
-    height: 100vh;
+    /* height: 100vh; */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -99,15 +106,21 @@
          /* justify-content: center; */  
   }
 
-  /* .pipe :first-child {
+  .pipe :first-child {
          background-color: var(	--material-color-black);
-         margin-top: 75px;
-         height: 5px;
-         width: 100%;
+         margin-top: 83px;
+         height: 2px;
+         width:120px;
+         min-width:50px; 
          position: absolute;
          left: -31px;
-  } */
-
+  }
+  .container :first-child :first-child  :first-child  :first-child
+   {
+    height: 2px;
+    width:60px  !important;
+    min-width:20px  !important;
+  }
   .nut {
     /* background-color:  #fe8a71; */
     background-color:   var(--material-color-blue-500) ;

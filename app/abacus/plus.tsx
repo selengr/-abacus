@@ -62,7 +62,7 @@ const Plus: FC = () => {
     }
 
     return (
-        <div id="wood" >
+        <div className={styles.wood} >
 
             <div id="suggest-number" className={styles.suggestNumber}></div>
 
@@ -218,7 +218,10 @@ const Unit = ({ w, doset }) => {
 
     return (
         <div className={styles.pack}>
-            <div className={styles.pipe}></div>
+            <div className={styles.pipe}>
+
+            <span></span>
+            </div>
             <div onClick={(e) => move(e, w, "not", 5)} data-id={`five${w}`} id={`five${w}`} className={`${styles.nut} five`}> </div>
             <div onClick={(e) => move(e, w, 1)} data-id={`four`} id={`four${w}`} className={`${styles.nut} four`}> </div>
             <div onClick={(e) => move(e, w, 2)} data-id={`three`} id={`three${w}`} className={`${styles.nut} three`}> </div>
