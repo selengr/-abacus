@@ -8,7 +8,7 @@ interface Verifycount {
     count: number;
     row: number
 }
-let nut1 = "0", nut2 = "36px", nut3 = "72px", nut4 = "108px", nut5 = "144px"
+let nut1 = "5px", nut2 = "41px", nut3 = "77px", nut4 = "113px", nut5 = "149px"
 const Plus: FC = () => {
 
     const [doCounting, setDoCounting] = useState<Verifycount>({ count: 0 })
@@ -102,7 +102,7 @@ const Unit = ({ w, doset }) => {
     useEffect(() => {
 
         one = document.querySelectorAll(".one")
-        one.forEach((item: Element) => item.style.bottom = "0")
+        one.forEach((item: Element) => item.style.bottom = "5px")
         two = document.querySelectorAll(".two")
         two.forEach((item: Element) => item.style.bottom = nut2)
         three = document.querySelectorAll(".three")
@@ -110,7 +110,7 @@ const Unit = ({ w, doset }) => {
         four = document.querySelectorAll(".four")
         four.forEach((item: Element) => item.style.bottom = nut4)
         five = document.querySelectorAll(".five")
-        five.forEach((item: Element) => item.style.top = "0")
+        five.forEach((item: Element) => item.style.top = "5px  ")
 
     }, [])
 
