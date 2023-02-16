@@ -6,7 +6,7 @@ import Head from "next/head";
 interface RegisterformValues { }
 interface Verifycount {
     count: number;
-    row: number
+    row?: number
 }
 let nut1 = "5px", nut2 = "41px", nut3 = "77px", nut4 = "113px", nut5 = "149px"
 const Plus: FC = () => {
@@ -23,10 +23,9 @@ const Plus: FC = () => {
 
 
     useEffect(() => {
-        let node
+        let node : Element | null
         node = document.querySelector("#suggest-number")
-        node.innerHTML = `${first_num}&nbsp;+&nbsp;${second_num}&nbsp;=&nbsp;${sum}`
-      
+       if(node) node.innerHTML = `${first_num}&nbsp;+&nbsp;${second_num}&nbsp;=&nbsp;${sum}`
     }, [])
 
 
@@ -54,9 +53,9 @@ const Plus: FC = () => {
             concludeSum += item
         })
         if (concludeSum === sum) {
-            let node = document.querySelector("#suggest-number")
-            node.style.textDecoration = "underline"
-            node.style.fontWeight = "bold"
+            let node  : Element | null = document.querySelector("#suggest-number")
+            if(node) node.style.textDecoration = "underline"
+            if(node) node.style.fontWeight = "bold"
         }
 
     }
@@ -88,7 +87,7 @@ export default Plus;
 
 // ================================================================================the second one
 
-const Unit = ({ w, doset }) => {
+const Unit = ({ w , doset } : any) => {
 
     const [doCounting, set] = useState<Verifycount>()
 
