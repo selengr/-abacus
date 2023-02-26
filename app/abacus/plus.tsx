@@ -14,7 +14,9 @@ const Plus: FC = () => {
     const [doCounting, setDoCounting] = useState<Verifycount>({ count: 0 })
     const [first_num, setfirst_num] = useState(Math.floor(Math.random() * 99))
     const [second_num, setsecond_num] = useState(Math.floor(Math.random() * 99))
-    const [sum, setsum] = useState(first_num + second_num)
+    const [third_num, setthird_num] = useState(Math.floor(Math.random() * 99))
+    const [sum, setsum] = useState(first_num + second_num )
+    const [level, setlevel] = useState(1)
     // const [counterState, updateCounterState] = useState( 0 )
 
     const dataCell: number[] = [
@@ -25,7 +27,7 @@ const Plus: FC = () => {
     useEffect(() => {
         let node : Element | null
         node = document.querySelector("#suggest-number")
-       if(node) node.innerHTML = `${first_num}&nbsp;+&nbsp;${second_num}&nbsp;=&nbsp;${sum}`
+       if(node) node.innerHTML = `${first_num}&nbsp;+&nbsp;${second_num}&nbsp;+&nbsp;${third_num}`
     }, [])
 
 
@@ -56,6 +58,26 @@ const Plus: FC = () => {
             let node  : Element | null = document.querySelector("#suggest-number")
             if(node) node.style.textDecoration = "underline"
             if(node) node.style.fontWeight = "bold"
+            setfirst_num(Math.floor(Math.random() * 99))
+            setsecond_num(Math.floor(Math.random() * 99))
+            setthird_num(Math.floor(Math.random() * 99))
+            setDoCounting({ count: 0 })
+
+
+
+            let check = document.querySelectorAll(`.default-number`)
+            
+            Array.isArray(check)
+            check.forEach((item)=> {
+                item.innerHTML = "0"
+            })
+
+
+            // setlevel((prev) => {
+            //     return (
+            //         level += 1
+            //     )
+            // })
         }
 
     }
@@ -71,7 +93,7 @@ const Plus: FC = () => {
                         return <div key={index.toString()}>
 
                             <Unit w={index} doset={(val, w) => doset(val, w)} />
-                            <span id={`last-count${index}`} className={styles.counter}>{doCounting.count}</span>
+                            <span id={`last-count${index}`} className={`${styles.counter} default-number`}>{doCounting.count}</span>
 
                         </div>
                     })
