@@ -2,7 +2,7 @@ import  { NextPage } from "next";
 import React, { useState, useEffect } from 'react';
 import { MyStopwatch } from "../components/timer";
 import styles from "../../styles/abacus/Abacus.module.css";
-
+import { useCookies } from "react-cookie";
 
 interface RegisterformValues { }
 interface Verifycount {
@@ -22,8 +22,12 @@ let nut1 = "5px", nut2 = "41px", nut3 = "77px", nut4 = "113px", nut5 = "149px"
 let first_num, second_num, third_num, sum : any, sum_third : any
 const Plus: NextPage = () => {
 
-    const [doCounting, setDoCounting] = useState<Verifycount>({ count: 0 })
 
+    const [cookies, setCookie, removeCookie] = useCookies(["user","timer"]);
+    
+    
+    const [doCounting, setDoCounting] = useState<Verifycount>({ count: 0 })
+  
     
     // let time = new Date();
     // time.setSeconds(time.getSeconds() + 600); // 10 minutes timer
@@ -36,6 +40,7 @@ const Plus: NextPage = () => {
 
 
     useEffect(() => {
+        
         intialConfig()
     }, [])
 
@@ -50,9 +55,11 @@ const Plus: NextPage = () => {
         let node: Element | null
         node = document.querySelector("#suggest-number")
         if (node) node.innerHTML = `${first_num}&nbsp;+&nbsp;${second_num}`
+        if (node) node.style.color = `black`
         let node2: Element | null
         node2 = document.querySelector("#suggest-number-third")
         if (node2) node2.innerHTML = `&nbsp;+&nbsp;${third_num}`
+        if (node2) node2.style.color = `black`
     }
 
 
@@ -91,6 +98,15 @@ const Plus: NextPage = () => {
             const el: Element | null = document.querySelector("#suggest-number-third")
             if (el) el.textContent = "next"
             if (el) el.style.zIndex = "999"
+
+
+             setCookie("user", typeof JSON.parse(cookies["user"]) === 'number'  ? JSON.parse(cookies["user"]) + 1 : 1);
+        
+            //  if(JSON.parse(cookies["user"]) === 9) {
+                 alert("its almost totaly done")
+                 setCookie("timer",Math.floor(Math.random() * 1000 *25.5 + 12 -8));
+            //  }
+         
         }
 
     }

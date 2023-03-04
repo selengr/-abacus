@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useStopwatch } from 'react-timer-hook';
+import { useCookies } from "react-cookie";
 
 function MyStopwatch() {
+
+    const [cookies, setCookie, removeCookie] = useCookies(["user"]);
+
+    useEffect(()=>{
+
+        // debugger             
+        console.log(cookies)  
+
+    },[cookies["timer"]])
+
   const {
     seconds,
     minutes,
@@ -16,15 +27,13 @@ function MyStopwatch() {
 
   return (
     <div style={{textAlign: 'center'}}>
-      <h1>react-timer-hook</h1>
-      <p>Stopwatch Demo</p>
-      <div style={{fontSize: '100px'}}>
-        <span>{days}</span>:<span>{hours}</span>:<span>{minutes}</span>:<span>{seconds}</span>
+      <div style={{fontSize: '100px',color:"black"}}>
+        <span >{minutes}</span>:<span>{seconds  }</span>
       </div>
       <p>{isRunning ? 'Running' : 'Not running'}</p>
-      <button onClick={start}>Start</button>
+      {/* <button onClick={start}>Start</button>
       <button onClick={pause}>Pause</button>
-      <button onClick={reset}>Reset</button>
+      <button onClick={reset}>Reset</button> */}
     </div>
   );
 } 
