@@ -23,7 +23,7 @@ const Abacus: NextPage = () => {
 <Image  
         src="/static/images/images (4).jfif"
         layout="fill"
-        objectFit="cover"
+        objectFit="fill"
         quality={100}
         className={styles.imageBackground}
       />

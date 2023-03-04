@@ -1,6 +1,7 @@
+import  { NextPage } from "next";
+import React, { useState, useEffect } from 'react';
+import { MyStopwatch } from "../components/timer";
 import styles from "../../styles/abacus/Abacus.module.css";
-import { useEffect, useState, FC } from "react";
-import Head from "next/head";
 
 
 interface RegisterformValues { }
@@ -8,27 +9,51 @@ interface Verifycount {
     count: number;
     row?: number
 }
+
+let one: string | NodeListOf<Element>,
+    two: string | NodeListOf<Element>,
+    three: string | NodeListOf<Element>,
+    four: string | NodeListOf<Element>,
+    five: string | NodeListOf<Element>
+
+
+
 let nut1 = "5px", nut2 = "41px", nut3 = "77px", nut4 = "113px", nut5 = "149px"
-const Plus: FC = () => {
+let first_num, second_num, third_num, sum : any, sum_third : any
+const Plus: NextPage = () => {
 
     const [doCounting, setDoCounting] = useState<Verifycount>({ count: 0 })
-    const [first_num, setfirst_num] = useState(Math.floor(Math.random() * 99))
-    const [second_num, setsecond_num] = useState(Math.floor(Math.random() * 99))
-    const [third_num, setthird_num] = useState(Math.floor(Math.random() * 99))
-    const [sum, setsum] = useState(first_num + second_num )
-    const [level, setlevel] = useState(1)
+
+    
+    // let time = new Date();
+    // time.setSeconds(time.getSeconds() + 600); // 10 minutes timer
+   
     // const [counterState, updateCounterState] = useState( 0 )
 
-    const dataCell: number[] = [
+    let dataCell: number[] = [
         1, 2, 3, 4, 5, 6, 7
     ]
 
 
     useEffect(() => {
-        let node : Element | null
-        node = document.querySelector("#suggest-number")
-       if(node) node.innerHTML = `${first_num}&nbsp;+&nbsp;${second_num}&nbsp;+&nbsp;${third_num}`
+        intialConfig()
     }, [])
+
+    const intialConfig = () => {
+
+        first_num = Math.floor(Math.random() * 99)
+        second_num = Math.floor(Math.random() * 99)
+        third_num = Math.floor(Math.random() * 99)
+        sum = first_num + second_num
+        sum_third = first_num + second_num + third_num
+
+        let node: Element | null
+        node = document.querySelector("#suggest-number")
+        if (node) node.innerHTML = `${first_num}&nbsp;+&nbsp;${second_num}`
+        let node2: Element | null
+        node2 = document.querySelector("#suggest-number-third")
+        if (node2) node2.innerHTML = `&nbsp;+&nbsp;${third_num}`
+    }
 
 
     let conclude: number[] = [0, 0, 0, 0, 0, 0, 0]
@@ -55,47 +80,76 @@ const Plus: FC = () => {
             concludeSum += item
         })
         if (concludeSum === sum) {
-            let node  : Element | null = document.querySelector("#suggest-number")
-            if(node) node.style.textDecoration = "underline"
-            if(node) node.style.fontWeight = "bold"
-            setfirst_num(Math.floor(Math.random() * 99))
-            setsecond_num(Math.floor(Math.random() * 99))
-            setthird_num(Math.floor(Math.random() * 99))
-            setDoCounting({ count: 0 })
+            let node: Element | null = document.querySelector("#suggest-number")
+            if (node) node.style.textDecoration = "underline"
+            if (node) node.style.fontWeight = "bold"
+        }
+        if (concludeSum === sum_third) {
+            let node: Element | null = document.querySelector("#suggest-number")
+            if (node) node.textContent = ""
 
-
-
-            let check = document.querySelectorAll(`.default-number`)
-            
-            Array.isArray(check)
-            check.forEach((item)=> {
-                item.innerHTML = "0"
-            })
-
-
-            // setlevel((prev) => {
-            //     return (
-            //         level += 1
-            //     )
-            // })
+            const el: Element | null = document.querySelector("#suggest-number-third")
+            if (el) el.textContent = "next"
+            if (el) el.style.zIndex = "999"
         }
 
+    }
+
+    const next_level = (Event: React.FormEvent<HTMLDivElement>) => {
+        Event.preventDefault()
+        let node: Element | null = document.querySelector("#suggest-number")
+
+
+        if (Event.target.outerText === "next") {
+            const count = document.querySelectorAll(".count-unit")
+            count.forEach(item => item.textContent = "0")
+            if (Event) Event.currentTarget.style.fontWeight = ""
+            if (Event) Event.currentTarget.style.textDecoration = ""
+            if (node) node.style.textDecoration = ""
+            if (node) node.style.fontWeight = ""
+
+
+
+            one = document.querySelectorAll(".one")
+            one.forEach((item: Element) => item.style.bottom = "5px")
+            two = document.querySelectorAll(".two")
+            two.forEach((item: Element) => item.style.bottom = nut2)
+            three = document.querySelectorAll(".three")
+            three.forEach((item: Element) => item.style.bottom = nut3)
+            four = document.querySelectorAll(".four")
+            four.forEach((item: Element) => item.style.bottom = nut4)
+            five = document.querySelectorAll(".five")
+            five.forEach((item: Element) => item.style.top = "5px  ")
+
+            setTimeout(() => {
+                intialConfig()
+            }, 1);
+
+        }
     }
 
     return (
         <div className={styles.wood} >
 
-            <div id="suggest-number" className={styles.suggestNumber}></div>
+            <div className="flex">
+                <div id="suggest-number" className={styles.suggestNumber}></div>
+                <div id="suggest-number-third" onClick={next_level} className={styles.suggestNumber}></div>
+            </div>
+
+                     
+            <div>
+                <MyStopwatch />
+            </div>
 
             <div className={styles.container}>
                 {
                     dataCell.reverse().map((item, index) => {
-                        return <div key={index.toString()}>
+                        return(<div key={index.toString()}>
 
                             <Unit w={index} doset={(val, w) => doset(val, w)} />
-                            <span id={`last-count${index}`} className={`${styles.counter} default-number`}>{doCounting.count}</span>
+                            <span id={`last-count${index}`} className={`${styles.counter} count-unit`}>{doCounting.count}</span>
 
-                        </div>
+                        </div>)
                     })
                 }
 
@@ -109,15 +163,11 @@ export default Plus;
 
 // ================================================================================the second one
 
-const Unit = ({ w , doset } : any) => {
+const Unit = ({ w, doset }: any) => {
 
     const [doCounting, set] = useState<Verifycount>()
 
-    let one: string | NodeListOf<Element>,
-        two: string | NodeListOf<Element>,
-        three: string | NodeListOf<Element>,
-        four: string | NodeListOf<Element>,
-        five: string | NodeListOf<Element>
+
 
 
     useEffect(() => {
@@ -241,7 +291,7 @@ const Unit = ({ w , doset } : any) => {
         <div className={styles.pack}>
             <div className={styles.pipe}>
 
-            <span></span>
+                <span></span>
             </div>
             <div onClick={(e) => move(e, w, "not", 5)} data-id={`five${w}`} id={`five${w}`} className={`${styles.nut} five`}> </div>
             <div onClick={(e) => move(e, w, 1)} data-id={`four`} id={`four${w}`} className={`${styles.nut} four`}> </div>
