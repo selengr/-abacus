@@ -53,7 +53,6 @@ const Body: FC = () => {
 
 
         clipboardEl.addEventListener("click", () => {
-            debugger
             const textarea = document.createElement("textarea");
             const password = resultEl.innerText;
 
