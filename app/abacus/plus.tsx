@@ -1,5 +1,5 @@
-import  { NextPage } from "next";
-import React, { useState, useEffect } from 'react';
+import { NextPage } from "next";
+import React, { useState, useEffect, useContext, createContext } from 'react';
 import { MyStopwatch } from "../components/timer";
 import styles from "../../styles/abacus/Abacus.module.css";
 import { useCookies } from "react-cookie";
@@ -17,21 +17,25 @@ let one: string | NodeListOf<Element>,
     five: string | NodeListOf<Element>
 
 
+const ThemeContext = createContext(null);
+
 
 let nut1 = "5px", nut2 = "41px", nut3 = "77px", nut4 = "113px", nut5 = "149px"
-let first_num, second_num, third_num, sum : any, sum_third : any
+let first_num, second_num, third_num, sum: any, sum_third: any
 const Plus: NextPage = () => {
 
+    let tim = 0
+    // const [tim, setTim] = useState<any>(0);
+    // const value = useContext(ThemeContext)
+    const [cookies, setCookie, removeCookie] = useCookies(["user", "minutes", "seconds"]);
 
-    const [cookies, setCookie, removeCookie] = useCookies(["user","timer"]);
-    
-    
+
     const [doCounting, setDoCounting] = useState<Verifycount>({ count: 0 })
-  
-    
+
+
     // let time = new Date();
     // time.setSeconds(time.getSeconds() + 600); // 10 minutes timer
-   
+
     // const [counterState, updateCounterState] = useState( 0 )
 
     let dataCell: number[] = [
@@ -40,7 +44,7 @@ const Plus: NextPage = () => {
 
 
     useEffect(() => {
-        
+
         intialConfig()
     }, [])
 
@@ -91,6 +95,11 @@ const Plus: NextPage = () => {
             if (node) node.style.textDecoration = "underline"
             if (node) node.style.fontWeight = "bold"
         }
+        else {
+            let node: Element | null = document.querySelector("#suggest-number")
+            if (node) node.style.textDecoration = "none"
+            if (node) node.style.fontWeight = "inherit"
+        }
         if (concludeSum === sum_third) {
             let node: Element | null = document.querySelector("#suggest-number")
             if (node) node.textContent = ""
@@ -98,17 +107,20 @@ const Plus: NextPage = () => {
             const el: Element | null = document.querySelector("#suggest-number-third")
             if (el) el.textContent = "next"
             if (el) el.style.zIndex = "999"
+            document.querySelector(".Abacus_container").style.pointerEvents = "none";
 
+            cookies["user"] === "undefind" ||
+            cookies["user"] === "NaN" ||
+            typeof cookies["user"] !== "number" 
+              ? cookies("user" ,[ 1 ] ) :
+                setCookie("user", cookies["user"] + 1 );
 
-             setCookie("user", typeof JSON.parse(cookies["user"]) === 'number'  ? JSON.parse(cookies["user"]) + 1 : 1);
-        
-            //  if(JSON.parse(cookies["user"]) === 9) {
-                 alert("its almost totaly done")
-                 setCookie("timer",Math.floor(Math.random() * 1000 *25.5 + 12 -8));
-            //  }
-         
+            if (cookies["user"] === 2) {
+                let seconds = cookies["seconds"]
+                let minutes = cookies["minutes"]
+                cookies.remove["user"]
+            }
         }
-
     }
 
     const next_level = (Event: React.FormEvent<HTMLDivElement>) => {
@@ -137,6 +149,8 @@ const Plus: NextPage = () => {
             five = document.querySelectorAll(".five")
             five.forEach((item: Element) => item.style.top = "5px  ")
 
+            document.querySelector(".Abacus_container").style.pointerEvents = "auto";
+
             setTimeout(() => {
                 intialConfig()
             }, 1);
@@ -145,32 +159,34 @@ const Plus: NextPage = () => {
     }
 
     return (
-        <div className={styles.wood} >
+        <ThemeContext.Provider value={tim}>
+            <div className={`${styles.wood} `} >
 
-            <div className="flex">
-                <div id="suggest-number" className={styles.suggestNumber}></div>
-                <div id="suggest-number-third" onClick={next_level} className={styles.suggestNumber}></div>
+                <div className="flex">
+                    <div id="suggest-number" className={styles.suggestNumber}></div>
+                    <div id="suggest-number-third" onClick={next_level} className={styles.suggestNumber}></div>
+                </div>
+
+
+                <div>
+                    <MyStopwatch />
+                </div>
+
+                <div className={`${styles.container} Abacus_container`}>
+                    {
+                        dataCell.reverse().map((item, index) => {
+                            return (<div key={index.toString()}>
+
+                                <Unit w={index} doset={(val, w) => doset(val, w)} />
+                                <span id={`last-count${index}`} className={`${styles.counter} count-unit`}>{doCounting.count}</span>
+
+                            </div>)
+                        })
+                    }
+
+                </div>
             </div>
-
-                     
-            <div>
-                <MyStopwatch />
-            </div>
-
-            <div className={styles.container}>
-                {
-                    dataCell.reverse().map((item, index) => {
-                        return(<div key={index.toString()}>
-
-                            <Unit w={index} doset={(val, w) => doset(val, w)} />
-                            <span id={`last-count${index}`} className={`${styles.counter} count-unit`}>{doCounting.count}</span>
-
-                        </div>)
-                    })
-                }
-
-            </div>
-        </div>
+        </ThemeContext.Provider>
     );
 };
 
