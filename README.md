@@ -1,6 +1,8 @@
-# Soroban — Abacus Arena
+# Soroban Arena
 
 Timed digital soroban with a public leaderboard, sound, and 1v1 race rooms.
+
+**Suggested GitHub repo name:** `soroban-arena`
 
 ## Stack
 
