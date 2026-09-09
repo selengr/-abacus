@@ -1,4 +1,4 @@
-import type { ScoreEntry } from "@/lib/server-store";
+import type { ScoreEntry } from "@/lib/types";
 
 export type { ScoreEntry };
 
