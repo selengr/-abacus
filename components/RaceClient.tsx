@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AbacusBoard } from "@/components/AbacusBoard";
+import { CopyInviteButton } from "@/components/CopyInviteButton";
+import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
 import { SoundToggle } from "@/components/SoundToggle";
 import {
   abacusValue,
@@ -33,9 +35,13 @@ type PublicRoom = Omit<Room, "players"> & {
   }>;
 };
 
-export function RaceClient() {
+type RaceClientProps = {
+  initialCode?: string;
+};
+
+export function RaceClient({ initialCode = "" }: RaceClientProps) {
   const [name, setName] = useState("");
-  const [joinCode, setJoinCode] = useState("");
+  const [joinCode, setJoinCode] = useState(initialCode);
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [room, setRoom] = useState<PublicRoom | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
@@ -310,6 +316,7 @@ export function RaceClient() {
 
   return (
     <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-6 sm:px-6">
+      <HowToPlay />
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Link href="/play" className="group">
           <p className="text-[11px] uppercase tracking-[0.35em] text-ash transition group-hover:text-paper">
@@ -320,6 +327,13 @@ export function RaceClient() {
           </h1>
         </Link>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openHowToPlay()}
+            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
+          >
+            How to
+          </button>
           <SoundToggle />
           {room && (
             <div className="rounded-xl border border-smoke bg-ink-soft/80 px-3 py-2 font-mono text-sm">
@@ -389,6 +403,11 @@ export function RaceClient() {
                 Join
               </button>
             </div>
+            {initialCode && (
+              <p className="text-center text-xs text-amber">
+                Invite code loaded from link
+              </p>
+            )}
             {error && <p className="text-center text-sm text-lacquer">{error}</p>}
           </div>
         </section>
@@ -403,6 +422,9 @@ export function RaceClient() {
             {room.code}
           </p>
           <p className="mt-4 text-ash">Share this code with your rival.</p>
+          <div className="mt-4 flex justify-center">
+            <CopyInviteButton code={room.code} />
+          </div>
           <ul className="mt-8 space-y-2">
             {room.players.map((p) => (
               <li
