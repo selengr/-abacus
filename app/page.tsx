@@ -1,22 +1,16 @@
 import Link from "next/link";
+import { SiteNav } from "@/components/SiteNav";
 
 export default function HomePage() {
   return (
     <main className="relative z-10 flex min-h-dvh flex-col">
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-between px-6 py-8 sm:px-10">
-        <nav className="animate-rise flex items-center justify-between">
+        <div className="animate-rise flex items-center justify-between gap-4">
           <p className="text-[11px] uppercase tracking-[0.4em] text-ash">
             Digital soroban
           </p>
-          <div className="flex gap-4 text-sm text-paper/80">
-            <Link href="/play" className="transition hover:text-amber">
-              Solo
-            </Link>
-            <Link href="/play/race" className="transition hover:text-amber">
-              Race
-            </Link>
-          </div>
-        </nav>
+          <SiteNav active="/" />
+        </div>
 
         <section className="relative flex flex-1 flex-col justify-center py-16">
           <div
@@ -36,24 +30,30 @@ export default function HomePage() {
           </h1>
           <p className="animate-rise-late mt-6 max-w-md text-lg text-ash sm:text-xl">
             Slide lacquer beads against the beam. Match the sum. Climb the
-            public board — or race a rival on the same seeded problems.
+            public board, crush the daily, or race a rival.
           </p>
           <div className="animate-rise-late mt-10 flex flex-wrap items-center gap-4">
             <Link
-              href="/play"
+              href="/play/daily"
               className="rounded-full bg-lacquer px-8 py-4 text-sm font-medium uppercase tracking-[0.22em] text-white transition hover:bg-lacquer-deep"
             >
-              Play solo
+              Daily challenge
+            </Link>
+            <Link
+              href="/play"
+              className="rounded-full border border-smoke px-8 py-4 text-sm font-medium uppercase tracking-[0.22em] text-paper transition hover:border-amber hover:text-amber"
+            >
+              Timed solo
             </Link>
             <Link
               href="/play/race"
               className="rounded-full border border-smoke px-8 py-4 text-sm font-medium uppercase tracking-[0.22em] text-paper transition hover:border-amber hover:text-amber"
             >
-              Race a rival
+              Race
             </Link>
           </div>
           <p className="animate-rise-late mt-6 font-mono text-xs text-ash">
-            public scores · sound · 1v1 race rooms
+            daily · practice · public scores · 1v1 rooms
           </p>
         </section>
 
