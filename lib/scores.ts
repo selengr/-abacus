@@ -1,65 +1,49 @@
-export type ScoreEntry = {
-  id: string;
-  name: string;
-  score: number;
-  difficulty: string;
-  solved: number;
-  createdAt: number;
-};
+import type { ScoreEntry } from "@/lib/server-store";
 
-const STORAGE_KEY = "soroban-scores-v1";
-const CHANGE_EVENT = "soroban-scores-changed";
-const MAX_ENTRIES = 10;
+export type { ScoreEntry };
 
-function notify() {
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event(CHANGE_EVENT));
-  }
-}
+let cache = "[]";
+const listeners = new Set<() => void>();
 
-export function loadScores(): ScoreEntry[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as ScoreEntry[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveScore(
-  entry: Omit<ScoreEntry, "id" | "createdAt">,
-): ScoreEntry[] {
-  const next: ScoreEntry = {
-    ...entry,
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    createdAt: Date.now(),
-  };
-  const ranked = [...loadScores(), next]
-    .sort((a, b) => b.score - a.score || a.createdAt - b.createdAt)
-    .slice(0, MAX_ENTRIES);
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ranked));
-  notify();
-  return ranked;
+function emit() {
+  listeners.forEach((listener) => listener());
 }
 
 export function subscribeScores(onStoreChange: () => void) {
-  if (typeof window === "undefined") return () => {};
-  const handler = () => onStoreChange();
-  window.addEventListener("storage", handler);
-  window.addEventListener(CHANGE_EVENT, handler);
+  listeners.add(onStoreChange);
   return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener(CHANGE_EVENT, handler);
+    listeners.delete(onStoreChange);
   };
 }
 
 export function getScoresSnapshot() {
-  return JSON.stringify(loadScores());
+  return cache;
 }
 
 export function getScoresServerSnapshot() {
   return "[]";
+}
+
+export async function refreshScores(): Promise<ScoreEntry[]> {
+  const res = await fetch("/api/scores", { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to load scores");
+  const scores = (await res.json()) as ScoreEntry[];
+  cache = JSON.stringify(scores);
+  emit();
+  return scores;
+}
+
+export async function saveScore(
+  entry: Omit<ScoreEntry, "id" | "createdAt">,
+): Promise<ScoreEntry[]> {
+  const res = await fetch("/api/scores", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry),
+  });
+  if (!res.ok) throw new Error("Failed to save score");
+  const scores = (await res.json()) as ScoreEntry[];
+  cache = JSON.stringify(scores);
+  emit();
+  return scores;
 }
