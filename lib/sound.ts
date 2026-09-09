@@ -1,4 +1,5 @@
 const MUTE_KEY = "soroban-mute-v1";
+const MUTE_EVENT = "soroban-mute-changed";
 
 type SoundName = "bead" | "success" | "clear" | "skip" | "tick" | "end" | "start";
 
@@ -17,6 +18,12 @@ function getCtx() {
   return ctx;
 }
 
+function notifyMute() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(MUTE_EVENT));
+  }
+}
+
 export function loadMutePreference() {
   if (typeof window === "undefined") return false;
   muted = window.localStorage.getItem(MUTE_KEY) === "1";
@@ -24,6 +31,9 @@ export function loadMutePreference() {
 }
 
 export function isMuted() {
+  if (typeof window !== "undefined" && !muted) {
+    muted = window.localStorage.getItem(MUTE_KEY) === "1";
+  }
   return muted;
 }
 
@@ -32,9 +42,22 @@ export function setMuted(next: boolean) {
   if (typeof window !== "undefined") {
     window.localStorage.setItem(MUTE_KEY, next ? "1" : "0");
   }
+  notifyMute();
   if (!next) {
     void getCtx()?.resume();
   }
+}
+
+export function subscribeMute(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {};
+  loadMutePreference();
+  const handler = () => onStoreChange();
+  window.addEventListener(MUTE_EVENT, handler);
+  window.addEventListener("storage", handler);
+  return () => {
+    window.removeEventListener(MUTE_EVENT, handler);
+    window.removeEventListener("storage", handler);
+  };
 }
 
 function tone(
