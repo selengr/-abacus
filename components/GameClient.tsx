@@ -6,17 +6,20 @@ import { AbacusBoard } from "@/components/AbacusBoard";
 import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
 import { Leaderboard } from "@/components/Leaderboard";
 import { SoundToggle } from "@/components/SoundToggle";
+import { StatsPanel } from "@/components/StatsPanel";
 import {
   ROUND_SECONDS,
   abacusValue,
   emptyRods,
   formatProblem,
   generateProblem,
+  problemAt,
   scoreForSolve,
   type Difficulty,
   type Problem,
   type RodState,
 } from "@/lib/abacus";
+import { dailySeed, formatDayLabel, todayKey } from "@/lib/daily";
 import {
   getScoresServerSnapshot,
   getScoresSnapshot,
@@ -26,15 +29,52 @@ import {
   type ScoreEntry,
 } from "@/lib/scores";
 import { playSound } from "@/lib/sound";
+import {
+  getStatsServerSnapshot,
+  getStatsSnapshot,
+  recordRun,
+  subscribeStats,
+  type PersonalStats,
+} from "@/lib/stats";
 
 function nowMs() {
   return Date.now();
 }
 
-export function GameClient() {
-  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+export type GameMode = "timed" | "practice" | "daily";
+
+type GameClientProps = {
+  mode?: GameMode;
+};
+
+const MODE_META: Record<
+  GameMode,
+  { title: string; eyebrow: string; blurb: string }
+> = {
+  timed: {
+    title: "Arena",
+    eyebrow: "Timed solo",
+    blurb: `${ROUND_SECONDS} seconds. Harder levels pay more. Scores post to the public board.`,
+  },
+  practice: {
+    title: "Practice",
+    eyebrow: "No clock",
+    blurb: "Warm up freely. No timer, no pressure — just beads and sums.",
+  },
+  daily: {
+    title: "Daily",
+    eyebrow: "Same board worldwide",
+    blurb: "One seeded run for everyone today. Beat yesterday’s hands.",
+  },
+};
+
+export function GameClient({ mode = "timed" }: GameClientProps) {
+  const [difficulty, setDifficulty] = useState<Difficulty>(
+    mode === "daily" ? "medium" : "easy",
+  );
   const [rods, setRods] = useState<RodState[]>(() => emptyRods());
   const [problem, setProblem] = useState<Problem | null>(null);
+  const [problemIndex, setProblemIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [solved, setSolved] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -45,12 +85,23 @@ export function GameClient() {
   const [flash, setFlash] = useState<"ok" | "miss" | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [newBest, setNewBest] = useState(false);
+
   const startedAt = useRef(0);
-  const solvedRef = useRef(false);
+  const solvedLock = useRef(false);
   const streakRef = useRef(0);
-  const difficultyRef = useRef<Difficulty>("easy");
+  const bestStreakRef = useRef(0);
+  const difficultyRef = useRef<Difficulty>(mode === "daily" ? "medium" : "easy");
   const problemRef = useRef<Problem | null>(null);
+  const problemIndexRef = useRef(0);
   const endedRef = useRef(false);
+  const dailySeedRef = useRef(dailySeed());
+  const dayKeyRef = useRef(todayKey());
+  const scoreLive = useRef(0);
+  const solvedLive = useRef(0);
+  const bestAtStartRef = useRef(0);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
 
   const scoresJson = useSyncExternalStore(
     subscribeScores,
@@ -62,25 +113,50 @@ export function GameClient() {
     [scoresJson],
   );
 
+  const statsJson = useSyncExternalStore(
+    subscribeStats,
+    getStatsSnapshot,
+    getStatsServerSnapshot,
+  );
+  const stats = useMemo(
+    () => JSON.parse(statsJson) as PersonalStats,
+    [statsJson],
+  );
+
   const value = useMemo(() => abacusValue(rods), [rods]);
   const matched = problem !== null && value === problem.answer && running;
+  const meta = MODE_META[mode];
+  const alreadyDidDaily =
+    mode === "daily" && stats.lastDailyKey === dayKeyRef.current;
 
   useEffect(() => {
     void refreshScores().catch(() => undefined);
   }, []);
 
+  const finishRound = useCallback(() => {
+    if (endedRef.current) return;
+    endedRef.current = true;
+    playSound("end");
+    setRunning(false);
+    setFinished(true);
+    const peakStreak = Math.max(bestStreakRef.current, streakRef.current);
+    const finalScore = scoreLive.current;
+    recordRun({
+      score: finalScore,
+      solved: solvedLive.current,
+      streak: peakStreak,
+      dailyKey: modeRef.current === "daily" ? dayKeyRef.current : null,
+    });
+    setNewBest(finalScore > bestAtStartRef.current && finalScore > 0);
+  }, []);
+
   useEffect(() => {
-    if (!running || finished) return;
+    if (!running || finished || mode === "practice") return;
     const id = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           window.clearInterval(id);
-          if (!endedRef.current) {
-            endedRef.current = true;
-            playSound("end");
-          }
-          setRunning(false);
-          setFinished(true);
+          finishRound();
           return 0;
         }
         if (s <= 10) playSound("tick");
@@ -88,15 +164,23 @@ export function GameClient() {
       });
     }, 1000);
     return () => window.clearInterval(id);
-  }, [running, finished]);
+  }, [running, finished, mode, finishRound]);
 
-  const nextProblem = useCallback(() => {
-    const p = generateProblem(difficultyRef.current);
+  const loadNext = useCallback(() => {
+    let p: Problem;
+    if (modeRef.current === "daily") {
+      const index = problemIndexRef.current;
+      p = problemAt("medium", dailySeedRef.current, index);
+      problemIndexRef.current = index + 1;
+      setProblemIndex(index + 1);
+    } else {
+      p = generateProblem(difficultyRef.current);
+    }
     problemRef.current = p;
     setProblem(p);
     setRods(emptyRods());
     startedAt.current = nowMs();
-    solvedRef.current = false;
+    solvedLock.current = false;
   }, []);
 
   const handleRodsChange = useCallback(
@@ -104,50 +188,64 @@ export function GameClient() {
       playSound("bead");
       setRods(next);
       const current = problemRef.current;
-      if (!current || !running || solvedRef.current) return;
+      if (!current || !running || solvedLock.current) return;
       if (abacusValue(next) !== current.answer) return;
 
-      solvedRef.current = true;
+      solvedLock.current = true;
       const nextStreak = streakRef.current + 1;
       streakRef.current = nextStreak;
+      bestStreakRef.current = Math.max(bestStreakRef.current, nextStreak);
       const gained = scoreForSolve({
-        difficulty: difficultyRef.current,
+        difficulty: modeRef.current === "daily" ? "medium" : difficultyRef.current,
         elapsedMs: nowMs() - startedAt.current,
         streak: nextStreak,
       });
-      setScore((s) => s + gained);
-      setSolved((n) => n + 1);
+      setScore((s) => {
+        const nextScore = s + gained;
+        scoreLive.current = nextScore;
+        return nextScore;
+      });
+      setSolved((n) => {
+        const nextSolved = n + 1;
+        solvedLive.current = nextSolved;
+        return nextSolved;
+      });
       setStreak(nextStreak);
       setFlash("ok");
       playSound("success");
       window.setTimeout(() => {
         setFlash(null);
-        nextProblem();
+        loadNext();
       }, 650);
     },
-    [running, nextProblem],
+    [running, loadNext],
   );
 
   function startGame(level: Difficulty = difficulty) {
-    setDifficulty(level);
-    difficultyRef.current = level;
+    const resolved = mode === "daily" ? "medium" : level;
+    setDifficulty(resolved);
+    difficultyRef.current = resolved;
     setScore(0);
     setSolved(0);
     setStreak(0);
+    scoreLive.current = 0;
+    solvedLive.current = 0;
     streakRef.current = 0;
+    bestStreakRef.current = 0;
+    problemIndexRef.current = 0;
+    setProblemIndex(0);
     setSecondsLeft(ROUND_SECONDS);
     setFinished(false);
     setRunning(true);
     setName("");
     setFlash(null);
     setSaveMessage(null);
+    setNewBest(false);
     endedRef.current = false;
-    const p = generateProblem(level);
-    problemRef.current = p;
-    setProblem(p);
-    setRods(emptyRods());
-    startedAt.current = nowMs();
-    solvedRef.current = false;
+    bestAtStartRef.current = stats.bestScore;
+    dailySeedRef.current = dailySeed();
+    dayKeyRef.current = todayKey();
+    loadNext();
     playSound("start");
   }
 
@@ -166,7 +264,7 @@ export function GameClient() {
       await saveScore({
         name: trimmed,
         score,
-        difficulty,
+        difficulty: mode === "daily" ? "daily" : difficulty,
         solved,
       });
       setSaveMessage("Saved to the public board.");
@@ -181,7 +279,7 @@ export function GameClient() {
     setStreak(0);
     streakRef.current = 0;
     playSound("skip");
-    nextProblem();
+    loadNext();
   }
 
   return (
@@ -193,7 +291,7 @@ export function GameClient() {
             Soroban
           </p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Arena
+            {meta.title}
           </h1>
         </Link>
         <div className="flex flex-wrap items-center gap-2 font-mono text-sm">
@@ -212,39 +310,108 @@ export function GameClient() {
             Race
           </Link>
           <Stat label="score" value={score} />
-          <Stat label="time" value={`${secondsLeft}s`} hot={secondsLeft <= 15} />
+          {mode !== "practice" && (
+            <Stat
+              label="time"
+              value={`${secondsLeft}s`}
+              hot={secondsLeft <= 15}
+            />
+          )}
           <Stat label="streak" value={streak} />
         </div>
       </header>
 
       {!running && !finished && (
         <section className="animate-rise mx-auto mt-10 max-w-xl text-center">
-          <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-            Set the beads.
-            <span className="block text-lacquer">Bank the points.</span>
-          </h2>
-          <p className="mt-4 text-ash">
-            {ROUND_SECONDS} seconds. Solve additions on a real soroban. Harder
-            levels pay more. Scores post to the public board.
+          <p className="text-[11px] uppercase tracking-[0.3em] text-lacquer">
+            {meta.eyebrow}
+            {mode === "daily" ? ` · ${formatDayLabel()}` : ""}
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
-              <button
-                key={level}
-                type="button"
-                onClick={() => startGame(level)}
-                className="rounded-full border border-smoke bg-ink-soft px-5 py-3 text-sm uppercase tracking-[0.2em] text-paper transition hover:border-lacquer hover:text-lacquer"
+          <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+            {mode === "daily" ? (
+              <>
+                Today’s beads.
+                <span className="block text-lacquer">One shared run.</span>
+              </>
+            ) : mode === "practice" ? (
+              <>
+                No clock.
+                <span className="block text-lacquer">Just the beam.</span>
+              </>
+            ) : (
+              <>
+                Set the beads.
+                <span className="block text-lacquer">Bank the points.</span>
+              </>
+            )}
+          </h2>
+          <p className="mt-4 text-ash">{meta.blurb}</p>
+          {alreadyDidDaily && (
+            <p className="mt-3 font-mono text-sm text-amber">
+              You already posted {stats.lastDailyScore} today — play again to
+              improve.
+            </p>
+          )}
+
+          {mode === "timed" && (
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => startGame(level)}
+                  className="rounded-full border border-smoke bg-ink-soft px-5 py-3 text-sm uppercase tracking-[0.2em] text-paper transition hover:border-lacquer hover:text-lacquer"
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {mode !== "timed" && (
+            <button
+              type="button"
+              onClick={() => startGame()}
+              className="mt-8 rounded-full bg-lacquer px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] text-white transition hover:bg-lacquer-deep"
+            >
+              {mode === "daily" ? "Start daily" : "Start practice"}
+            </button>
+          )}
+
+          <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm">
+            {mode !== "daily" && (
+              <Link
+                href="/play/daily"
+                className="text-amber underline-offset-4 hover:underline"
               >
-                {level}
-              </button>
-            ))}
+                Daily challenge
+              </Link>
+            )}
+            {mode !== "practice" && (
+              <Link
+                href="/play/practice"
+                className="text-ash underline-offset-4 hover:text-paper hover:underline"
+              >
+                Practice mode
+              </Link>
+            )}
+            {mode !== "timed" && (
+              <Link
+                href="/play"
+                className="text-ash underline-offset-4 hover:text-paper hover:underline"
+              >
+                Timed arena
+              </Link>
+            )}
+            <Link
+              href="/play/race"
+              className="text-ash underline-offset-4 hover:text-paper hover:underline"
+            >
+              Race a rival
+            </Link>
           </div>
-          <Link
-            href="/play/race"
-            className="mt-6 inline-block text-sm text-amber underline-offset-4 hover:underline"
-          >
-            Challenge a rival instead
-          </Link>
+
+          <StatsPanel />
         </section>
       )}
 
@@ -252,7 +419,9 @@ export function GameClient() {
         <section className="animate-rise flex flex-1 flex-col items-center gap-6">
           <div className="text-center">
             <p className="text-[11px] uppercase tracking-[0.3em] text-ash">
-              Make this sum
+              {mode === "daily"
+                ? `Daily · problem ${Math.max(problemIndex, 1)}`
+                : "Make this sum"}
             </p>
             <p
               className={[
@@ -276,7 +445,7 @@ export function GameClient() {
             matched={matched}
           />
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
             <button
               type="button"
               onClick={resetBoard}
@@ -291,6 +460,15 @@ export function GameClient() {
             >
               Skip
             </button>
+            {mode === "practice" && (
+              <button
+                type="button"
+                onClick={finishRound}
+                className="rounded-full border border-lacquer/50 px-4 py-2 text-sm text-lacquer transition hover:bg-lacquer/10"
+              >
+                End session
+              </button>
+            )}
           </div>
         </section>
       )}
@@ -298,29 +476,41 @@ export function GameClient() {
       {finished && (
         <section className="animate-rise mx-auto mt-8 w-full max-w-lg text-center">
           <p className="text-[11px] uppercase tracking-[0.3em] text-ash">
-            Round over
+            {mode === "practice" ? "Session over" : "Round over"}
           </p>
           <h2 className="mt-2 text-5xl font-semibold text-amber">{score}</h2>
+          {newBest && (
+            <p className="mt-2 font-mono text-sm text-lacquer">
+              New personal best
+            </p>
+          )}
           <p className="mt-2 text-ash">
-            {solved} solved on {difficulty}
+            {solved} solved
+            {mode === "daily"
+              ? " on daily"
+              : mode === "practice"
+                ? " in practice"
+                : ` on ${difficulty}`}
           </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
-              maxLength={16}
-              className="flex-1 rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center outline-none focus:border-amber"
-            />
-            <button
-              type="button"
-              onClick={() => void submitScore()}
-              disabled={saving}
-              className="rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white transition hover:bg-lacquer-deep disabled:opacity-60"
-            >
-              {saving ? "Saving…" : "Save score"}
-            </button>
-          </div>
+          {mode !== "practice" && (
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                maxLength={16}
+                className="flex-1 rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center outline-none focus:border-amber"
+              />
+              <button
+                type="button"
+                onClick={() => void submitScore()}
+                disabled={saving}
+                className="rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white transition hover:bg-lacquer-deep disabled:opacity-60"
+              >
+                {saving ? "Saving…" : "Save score"}
+              </button>
+            </div>
+          )}
           {saveMessage && <p className="mt-3 text-sm text-ash">{saveMessage}</p>}
           <button
             type="button"
@@ -329,10 +519,11 @@ export function GameClient() {
           >
             Play again
           </button>
+          <StatsPanel />
         </section>
       )}
 
-      <Leaderboard entries={leaderboard} />
+      {mode !== "practice" && <Leaderboard entries={leaderboard} />}
     </div>
   );
 }
