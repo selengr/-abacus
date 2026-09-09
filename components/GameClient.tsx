@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AbacusBoard } from "@/components/AbacusBoard";
+import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
 import { Leaderboard } from "@/components/Leaderboard";
 import { SoundToggle } from "@/components/SoundToggle";
 import {
@@ -185,6 +186,7 @@ export function GameClient() {
 
   return (
     <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-6 sm:px-6">
+      <HowToPlay />
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Link href="/" className="group">
           <p className="text-[11px] uppercase tracking-[0.35em] text-ash transition group-hover:text-paper">
@@ -195,6 +197,13 @@ export function GameClient() {
           </h1>
         </Link>
         <div className="flex flex-wrap items-center gap-2 font-mono text-sm">
+          <button
+            type="button"
+            onClick={() => openHowToPlay()}
+            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
+          >
+            How to
+          </button>
           <SoundToggle />
           <Link
             href="/play/race"
