@@ -1,4 +1,4 @@
-import type { ScoreEntry } from "@/lib/scores";
+import type { ScoreEntry } from "@/lib/types";
 
 export function Leaderboard({
   entries,
