@@ -1,6 +1,6 @@
 # Soroban — Abacus Arena
 
-A timed digital soroban you can share: slide beads, match sums, earn points, and climb a local leaderboard.
+Timed digital soroban with a public leaderboard, sound, and 1v1 race rooms.
 
 ## Stack
 
@@ -21,9 +21,26 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Play
 
 - Landing: `/`
-- Arena: `/play`
-- Difficulties: easy · medium · hard
-- Scores save in the browser (`localStorage`)
+- Solo arena: `/play`
+- 1v1 race: `/play/race`
+- Public scores API: `GET/POST /api/scores`
+
+## Features
+
+- **Public leaderboard** — scores post through the API (file/memory locally, Upstash Redis in production if configured)
+- **Sound** — bead clicks, success, timer ticks, mute toggle
+- **Multiplayer race** — create/join a room code, same seeded problems, live rival score
+
+## Optional Upstash
+
+Copy `.env.example` to `.env.local` and set:
+
+```bash
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+```
+
+Without Redis, local/dev still works via `.data/store.json`.
 
 ## Scripts
 
