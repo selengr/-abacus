@@ -1,15 +1,29 @@
 import React, { FC } from "react";
-import PropTypes from "prop-types";
 
 import StyledBlankState from "./index.css";
 
-const BlankState : FC = ({
-  dashed,
-  bordered,
-  transparent,
+interface BlankStateAction {
+  style?: string;
+  label?: string;
+  onClick?: () => void;
+}
+
+interface BlankStateProps {
+  dashed?: boolean;
+  bordered?: boolean;
+  transparent?: boolean;
+  title: string;
+  subtitle: string;
+  action?: BlankStateAction | null;
+}
+
+const BlankState: FC<BlankStateProps> = ({
+  dashed = false,
+  bordered = false,
+  transparent = false,
   title,
   subtitle,
-  action,
+  action = null,
 }) => (
   <StyledBlankState
     className={`blank-state${dashed ? " dashed" : ""}${
@@ -20,29 +34,14 @@ const BlankState : FC = ({
     <p>{subtitle}</p>
     {action && (
       <button
+        type="button"
         className={`btn btn-${action.style || "primary"}`}
-        onClick={action.onClick || null}
+        onClick={action.onClick}
       >
         {action.label || ""}
       </button>
     )}
   </StyledBlankState>
 );
-
-BlankState.defaultProps = {
-  dashed: false,
-  bordered: false,
-  transparent: false,
-  action: null,
-};
-
-BlankState.propTypes = {
-  dashed: PropTypes.bool,
-  bordered: PropTypes.bool,
-  transparent: PropTypes.bool,
-  title: PropTypes.string.isRequired,
-  subtitle: PropTypes.string.isRequired,
-  action: PropTypes.object,
-};
 
 export default BlankState;

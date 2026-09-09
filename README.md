@@ -1,21 +1,28 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# SOROBAN — بازی چرتکه آنلاین
 
-## Getting Started
+بازی تعاملی سوروبان با امتیازدهی، زنجیره درست‌ها، و جدول رتبه‌های محلی.
 
-First, run the development server:
+## اجرا
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- لندینگ: [http://localhost:3000](http://localhost:3000)
+- بازی: [http://localhost:3000/abacus](http://localhost:3000/abacus)
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## بازی چطور کار می‌کند؟
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+1. نام و سطح سختی را انتخاب کن
+2. حاصل جمع را با مهره‌های چرتکه بساز (مهره قرمز = ۵، مهره‌های روشن = ۱)
+3. با هر پاسخ درست امتیاز می‌گیری؛ سرعت و زنجیره امتیاز را بیشتر می‌کند
+4. بعد از ۱۰ دور، امتیازت در جدول همین مرورگر ذخیره می‌شود
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## دیپلوی
 
-## a simple abacus project which it's backend is not still ready to serve
+پروژه Next.js است؛ روی Vercel با اتصال همین ریپو دیپلوی می‌شود.
+
+```bash
+npm run build && npm start
+```

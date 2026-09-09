@@ -1,7 +1,8 @@
 {
-  "name": "cv-auth",
-  "version": "0.1.0",
+  "name": "soroban-abacus",
+  "version": "0.2.0",
   "private": true,
+  "description": "SOROBAN — online soroban abacus game with scoring",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
