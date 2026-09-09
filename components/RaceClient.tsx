@@ -47,7 +47,6 @@ export function RaceClient() {
   const [problemIndex, setProblemIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [solved, setSolved] = useState(0);
-  const [streak, setStreak] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(90);
   const [flash, setFlash] = useState<"ok" | "miss" | null>(null);
 
@@ -60,6 +59,7 @@ export function RaceClient() {
   const problemIndexRef = useRef(0);
   const finishedSent = useRef(false);
   const playingStarted = useRef(false);
+  const roomCode = room?.code ?? null;
 
   const me = room?.players.find((p) => p.id === playerId) ?? null;
   const rival = room?.players.find((p) => p.id !== playerId) ?? null;
@@ -183,9 +183,9 @@ export function RaceClient() {
   );
 
   useEffect(() => {
-    if (!room) return;
+    if (!roomCode) return;
     const id = window.setInterval(() => {
-      void fetch(`/api/rooms/${room.code}`, { cache: "no-store" })
+      void fetch(`/api/rooms/${roomCode}`, { cache: "no-store" })
         .then((res) => res.json())
         .then((data: { room?: PublicRoom }) => {
           if (data.room) setRoom(data.room);
@@ -193,7 +193,7 @@ export function RaceClient() {
         .catch(() => undefined);
     }, 1000);
     return () => window.clearInterval(id);
-  }, [room?.code]);
+  }, [roomCode]);
 
   useEffect(() => {
     if (!room || room.status !== "playing" || !room.startedAt) return;
@@ -205,14 +205,15 @@ export function RaceClient() {
       streakRef.current = 0;
       setScore(0);
       setSolved(0);
-      setStreak(0);
       loadProblem(room, 0);
       playSound("start");
     }
 
+    const startedAtMs = room.startedAt;
+    const roundSeconds = room.roundSeconds;
     const tick = window.setInterval(() => {
-      const elapsed = Math.floor((nowMs() - (room.startedAt ?? nowMs())) / 1000);
-      const left = Math.max(0, room.roundSeconds - elapsed);
+      const elapsed = Math.floor((nowMs() - startedAtMs) / 1000);
+      const left = Math.max(0, roundSeconds - elapsed);
       setSecondsLeft(left);
       if (left <= 10 && left > 0) playSound("tick");
       if (left <= 0 && !finishedSent.current) {
@@ -222,7 +223,7 @@ export function RaceClient() {
       }
     }, 250);
     return () => window.clearInterval(tick);
-  }, [room, loadProblem, syncProgress]);
+  }, [room?.status, room?.startedAt, room, loadProblem, syncProgress]);
 
   useEffect(() => {
     if (room?.status === "finished" && !finishedSent.current) {
@@ -255,7 +256,6 @@ export function RaceClient() {
       solvedCountRef.current = nextSolved;
       setScore(nextScore);
       setSolved(nextSolved);
-      setStreak(nextStreak);
       setFlash("ok");
       playSound("success");
       void syncProgress("progress");
@@ -278,11 +278,29 @@ export function RaceClient() {
   function skipProblem() {
     if (!room || room.status !== "playing") return;
     streakRef.current = 0;
-    setStreak(0);
     playSound("skip");
     const nextIndex = problemIndexRef.current + 1;
     loadProblem(room, nextIndex);
     void syncProgress("progress");
+  }
+
+  function resetLobby() {
+    setRoom(null);
+    setPlayerId(null);
+    setError(null);
+    setJoinCode("");
+    setProblem(null);
+    setScore(0);
+    setSolved(0);
+    setProblemIndex(0);
+    setFlash(null);
+    setRods(emptyRods());
+    playingStarted.current = false;
+    finishedSent.current = false;
+    scoreRef.current = 0;
+    solvedCountRef.current = 0;
+    streakRef.current = 0;
+    problemIndexRef.current = 0;
   }
 
   const winner =
@@ -498,9 +516,7 @@ export function RaceClient() {
           </ul>
           <button
             type="button"
-            onClick={() => {
-              window.location.href = "/play/race";
-            }}
+            onClick={resetLobby}
             className="mt-8 inline-block rounded-full border border-smoke px-6 py-3 text-sm uppercase tracking-[0.18em]"
           >
             New race
