@@ -24,14 +24,19 @@ Open [http://localhost:3000](http://localhost:3000).
 
 - Landing: `/`
 - Solo arena: `/play`
+- Daily challenge: `/play/daily`
+- Practice: `/play/practice`
 - 1v1 race: `/play/race`
 - Public scores API: `GET/POST /api/scores`
 
 ## Features
 
+- **Daily challenge** — one seeded board for everyone each UTC day
+- **Practice mode** — untimed warm-ups
+- **Personal stats** — local bests, streak, and daily history
 - **Public leaderboard** — scores post through the API (file/memory locally, Upstash Redis in production if configured)
 - **Sound** — bead clicks, success, timer ticks, mute toggle
-- **Multiplayer race** — create/join a room code, same seeded problems, live rival score
+- **Multiplayer race** — create/join a room code or invite link, same seeded problems, live rival score
 
 ## Optional Upstash
 
