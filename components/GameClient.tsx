@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AbacusBoard } from "@/components/AbacusBoard";
+import { Leaderboard } from "@/components/Leaderboard";
+import { SoundToggle } from "@/components/SoundToggle";
 import {
+  ROUND_SECONDS,
   abacusValue,
   emptyRods,
   formatProblem,
@@ -16,12 +19,12 @@ import {
 import {
   getScoresServerSnapshot,
   getScoresSnapshot,
+  refreshScores,
   saveScore,
   subscribeScores,
   type ScoreEntry,
 } from "@/lib/scores";
-
-const ROUND_SECONDS = 90;
+import { playSound } from "@/lib/sound";
 
 function nowMs() {
   return Date.now();
@@ -39,11 +42,14 @@ export function GameClient() {
   const [finished, setFinished] = useState(false);
   const [name, setName] = useState("");
   const [flash, setFlash] = useState<"ok" | "miss" | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const startedAt = useRef(0);
   const solvedRef = useRef(false);
   const streakRef = useRef(0);
   const difficultyRef = useRef<Difficulty>("easy");
   const problemRef = useRef<Problem | null>(null);
+  const endedRef = useRef(false);
 
   const scoresJson = useSyncExternalStore(
     subscribeScores,
@@ -59,15 +65,24 @@ export function GameClient() {
   const matched = problem !== null && value === problem.answer && running;
 
   useEffect(() => {
+    void refreshScores().catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
     if (!running || finished) return;
     const id = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
           window.clearInterval(id);
+          if (!endedRef.current) {
+            endedRef.current = true;
+            playSound("end");
+          }
           setRunning(false);
           setFinished(true);
           return 0;
         }
+        if (s <= 10) playSound("tick");
         return s - 1;
       });
     }, 1000);
@@ -85,6 +100,7 @@ export function GameClient() {
 
   const handleRodsChange = useCallback(
     (next: RodState[]) => {
+      playSound("bead");
       setRods(next);
       const current = problemRef.current;
       if (!current || !running || solvedRef.current) return;
@@ -102,6 +118,7 @@ export function GameClient() {
       setSolved((n) => n + 1);
       setStreak(nextStreak);
       setFlash("ok");
+      playSound("success");
       window.setTimeout(() => {
         setFlash(null);
         nextProblem();
@@ -122,39 +139,53 @@ export function GameClient() {
     setRunning(true);
     setName("");
     setFlash(null);
+    setSaveMessage(null);
+    endedRef.current = false;
     const p = generateProblem(level);
     problemRef.current = p;
     setProblem(p);
     setRods(emptyRods());
     startedAt.current = nowMs();
     solvedRef.current = false;
+    playSound("start");
   }
 
   function resetBoard() {
     setRods(emptyRods());
     setFlash("miss");
+    playSound("clear");
     window.setTimeout(() => setFlash(null), 400);
   }
 
-  function submitScore() {
+  async function submitScore() {
     const trimmed = name.trim().slice(0, 16) || "Player";
-    saveScore({
-      name: trimmed,
-      score,
-      difficulty,
-      solved,
-    });
+    setSaving(true);
+    setSaveMessage(null);
+    try {
+      await saveScore({
+        name: trimmed,
+        score,
+        difficulty,
+        solved,
+      });
+      setSaveMessage("Saved to the public board.");
+    } catch {
+      setSaveMessage("Could not save. Try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function skipProblem() {
     setStreak(0);
     streakRef.current = 0;
+    playSound("skip");
     nextProblem();
   }
 
   return (
     <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-6 sm:px-6">
-      <header className="mb-6 flex items-center justify-between gap-4">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Link href="/" className="group">
           <p className="text-[11px] uppercase tracking-[0.35em] text-ash transition group-hover:text-paper">
             Soroban
@@ -163,7 +194,14 @@ export function GameClient() {
             Arena
           </h1>
         </Link>
-        <div className="flex gap-2 font-mono text-sm">
+        <div className="flex flex-wrap items-center gap-2 font-mono text-sm">
+          <SoundToggle />
+          <Link
+            href="/play/race"
+            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-lacquer hover:text-lacquer"
+          >
+            Race
+          </Link>
           <Stat label="score" value={score} />
           <Stat label="time" value={`${secondsLeft}s`} hot={secondsLeft <= 15} />
           <Stat label="streak" value={streak} />
@@ -178,7 +216,7 @@ export function GameClient() {
           </h2>
           <p className="mt-4 text-ash">
             {ROUND_SECONDS} seconds. Solve additions on a real soroban. Harder
-            levels pay more.
+            levels pay more. Scores post to the public board.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
@@ -192,6 +230,12 @@ export function GameClient() {
               </button>
             ))}
           </div>
+          <Link
+            href="/play/race"
+            className="mt-6 inline-block text-sm text-amber underline-offset-4 hover:underline"
+          >
+            Challenge a rival instead
+          </Link>
         </section>
       )}
 
@@ -261,12 +305,14 @@ export function GameClient() {
             />
             <button
               type="button"
-              onClick={submitScore}
-              className="rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white transition hover:bg-lacquer-deep"
+              onClick={() => void submitScore()}
+              disabled={saving}
+              className="rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white transition hover:bg-lacquer-deep disabled:opacity-60"
             >
-              Save score
+              {saving ? "Saving…" : "Save score"}
             </button>
           </div>
+          {saveMessage && <p className="mt-3 text-sm text-ash">{saveMessage}</p>}
           <button
             type="button"
             onClick={() => startGame(difficulty)}
@@ -296,29 +342,5 @@ function Stat({
       <p className="text-[10px] uppercase tracking-[0.2em] text-ash">{label}</p>
       <p className={hot ? "text-lacquer" : "text-paper"}>{value}</p>
     </div>
-  );
-}
-
-function Leaderboard({ entries }: { entries: ScoreEntry[] }) {
-  if (entries.length === 0) return null;
-  return (
-    <section className="animate-rise-late mt-auto border-t border-smoke/80 pt-6">
-      <h3 className="text-[11px] uppercase tracking-[0.3em] text-ash">
-        Leaderboard
-      </h3>
-      <ol className="mt-3 space-y-2">
-        {entries.map((entry, index) => (
-          <li
-            key={entry.id}
-            className="flex items-center justify-between gap-3 rounded-xl border border-smoke/70 bg-ink-soft/50 px-3 py-2 font-mono text-sm"
-          >
-            <span className="text-ash">{index + 1}</span>
-            <span className="flex-1 truncate text-paper">{entry.name}</span>
-            <span className="text-ash">{entry.difficulty}</span>
-            <span className="text-amber">{entry.score}</span>
-          </li>
-        ))}
-      </ol>
-    </section>
   );
 }
