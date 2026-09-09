@@ -1,3 +1,5 @@
+import { createRng } from "@/lib/rng";
+
 export type RodState = {
   heaven: boolean;
   earth: number;
@@ -10,7 +12,10 @@ export type Problem = {
   answer: number;
 };
 
+export type Rng = () => number;
+
 export const ROD_COUNT = 5;
+export const ROUND_SECONDS = 90;
 
 export function emptyRods(count = ROD_COUNT): RodState[] {
   return Array.from({ length: count }, () => ({ heaven: false, earth: 0 }));
@@ -27,8 +32,8 @@ export function abacusValue(rods: RodState[]): number {
   }, 0);
 }
 
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function randomInt(rng: Rng, min: number, max: number): number {
+  return Math.floor(rng() * (max - min + 1)) + min;
 }
 
 const DIFFICULTY_RANGES: Record<
@@ -40,12 +45,15 @@ const DIFFICULTY_RANGES: Record<
   hard: { addendCount: 3, maxAddend: 250, maxAnswer: 750 },
 };
 
-export function generateProblem(difficulty: Difficulty): Problem {
+export function generateProblem(
+  difficulty: Difficulty,
+  rng: Rng = Math.random,
+): Problem {
   const { addendCount, maxAddend, maxAnswer } = DIFFICULTY_RANGES[difficulty];
 
   for (let attempt = 0; attempt < 40; attempt += 1) {
     const addends = Array.from({ length: addendCount }, () =>
-      randomInt(1, maxAddend),
+      randomInt(rng, 1, maxAddend),
     );
     const answer = addends.reduce((sum, n) => sum + n, 0);
     if (answer <= maxAnswer) {
@@ -54,6 +62,20 @@ export function generateProblem(difficulty: Difficulty): Problem {
   }
 
   return { addends: [7, 8], answer: 15 };
+}
+
+/** Same problem for every player given seed + index. */
+export function problemAt(
+  difficulty: Difficulty,
+  seed: number,
+  index: number,
+): Problem {
+  const rng = createRng(seed);
+  let problem = generateProblem(difficulty, rng);
+  for (let i = 0; i < index; i += 1) {
+    problem = generateProblem(difficulty, rng);
+  }
+  return problem;
 }
 
 export function formatProblem(problem: Problem): string {
