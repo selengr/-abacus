@@ -1,39 +1,39 @@
 import type { NextPage } from "next";
-import { useEffect, useState } from "react";
-import Plus from "../../app/abacus/plus";
-import styles from "../../styles/abacus/Abacus.module.css";
-import Image from 'next/image';
+import Head from "next/head";
+import dynamic from "next/dynamic";
 
-interface RegisterformValues { }
-
-
-const Abacus: NextPage = () => {
-
-  const [doCounting, setDoCounting] = useState(0)
-
-
-  useEffect(() => {
-
-  }, [])
-
-
-  return (
-
-<>
-<Image  
-        src="/static/images/images (4).jfif"
-        layout="fill"
-        objectFit="fill"
-        quality={100}
-        className={styles.imageBackground}
-      />
-    <div className={styles.mainPlus}>
-      <Plus />
+const GameShell = dynamic(() => import("../../app/abacus/GameShell"), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        background: "#1c110a",
+        color: "#e4c76b",
+        fontFamily: "Vazirmatn, sans-serif",
+      }}
+    >
+      در حال آماده‌سازی چرتکه…
     </div>
-</>
+  ),
+});
 
-
+const AbacusPage: NextPage = () => {
+  return (
+    <>
+      <Head>
+        <title>SOROBAN — بازی چرتکه</title>
+        <meta
+          name="description"
+          content="با چرتکه سوروبان جمع بزن، امتیاز بگیر و در جدول رتبه‌ها بدرخش."
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
+      <GameShell />
+    </>
   );
 };
 
-export default Abacus;
+export default AbacusPage;
