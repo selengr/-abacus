@@ -8,12 +8,14 @@ export default function HomePage() {
           <p className="text-[11px] uppercase tracking-[0.4em] text-ash">
             Digital soroban
           </p>
-          <Link
-            href="/play"
-            className="text-sm text-paper/80 transition hover:text-amber"
-          >
-            Enter arena
-          </Link>
+          <div className="flex gap-4 text-sm text-paper/80">
+            <Link href="/play" className="transition hover:text-amber">
+              Solo
+            </Link>
+            <Link href="/play/race" className="transition hover:text-amber">
+              Race
+            </Link>
+          </div>
         </nav>
 
         <section className="relative flex flex-1 flex-col justify-center py-16">
@@ -34,19 +36,25 @@ export default function HomePage() {
           </h1>
           <p className="animate-rise-late mt-6 max-w-md text-lg text-ash sm:text-xl">
             Slide lacquer beads against the beam. Match the sum. Climb the
-            board before the clock burns out.
+            public board — or race a rival on the same seeded problems.
           </p>
           <div className="animate-rise-late mt-10 flex flex-wrap items-center gap-4">
             <Link
               href="/play"
               className="rounded-full bg-lacquer px-8 py-4 text-sm font-medium uppercase tracking-[0.22em] text-white transition hover:bg-lacquer-deep"
             >
-              Play now
+              Play solo
             </Link>
-            <p className="font-mono text-xs text-ash">
-              easy · medium · hard · local scores
-            </p>
+            <Link
+              href="/play/race"
+              className="rounded-full border border-smoke px-8 py-4 text-sm font-medium uppercase tracking-[0.22em] text-paper transition hover:border-amber hover:text-amber"
+            >
+              Race a rival
+            </Link>
           </div>
+          <p className="animate-rise-late mt-6 font-mono text-xs text-ash">
+            public scores · sound · 1v1 race rooms
+          </p>
         </section>
 
         <footer className="animate-rise-late border-t border-smoke/60 pt-6 text-xs text-ash">
