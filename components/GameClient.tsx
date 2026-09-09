@@ -23,6 +23,10 @@ import {
 
 const ROUND_SECONDS = 90;
 
+function nowMs() {
+  return Date.now();
+}
+
 export function GameClient() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [rods, setRods] = useState<RodState[]>(() => emptyRods());
@@ -35,10 +39,10 @@ export function GameClient() {
   const [finished, setFinished] = useState(false);
   const [name, setName] = useState("");
   const [flash, setFlash] = useState<"ok" | "miss" | null>(null);
-  const startedAt = useRef<number>(Date.now());
+  const startedAt = useRef(0);
   const solvedRef = useRef(false);
   const streakRef = useRef(0);
-  const difficultyRef = useRef<Difficulty>(difficulty);
+  const difficultyRef = useRef<Difficulty>("easy");
   const problemRef = useRef<Problem | null>(null);
 
   const scoresJson = useSyncExternalStore(
@@ -75,7 +79,7 @@ export function GameClient() {
     problemRef.current = p;
     setProblem(p);
     setRods(emptyRods());
-    startedAt.current = Date.now();
+    startedAt.current = nowMs();
     solvedRef.current = false;
   }, []);
 
@@ -91,7 +95,7 @@ export function GameClient() {
       streakRef.current = nextStreak;
       const gained = scoreForSolve({
         difficulty: difficultyRef.current,
-        elapsedMs: Date.now() - startedAt.current,
+        elapsedMs: nowMs() - startedAt.current,
         streak: nextStreak,
       });
       setScore((s) => s + gained);
@@ -122,7 +126,7 @@ export function GameClient() {
     problemRef.current = p;
     setProblem(p);
     setRods(emptyRods());
-    startedAt.current = Date.now();
+    startedAt.current = nowMs();
     solvedRef.current = false;
   }
 
