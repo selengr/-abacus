@@ -101,7 +101,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const solvedLive = useRef(0);
   const bestAtStartRef = useRef(0);
   const modeRef = useRef(mode);
-  modeRef.current = mode;
 
   const scoresJson = useSyncExternalStore(
     subscribeScores,
@@ -126,8 +125,12 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const value = useMemo(() => abacusValue(rods), [rods]);
   const matched = problem !== null && value === problem.answer && running;
   const meta = MODE_META[mode];
-  const alreadyDidDaily =
-    mode === "daily" && stats.lastDailyKey === dayKeyRef.current;
+  const dayKey = todayKey();
+  const alreadyDidDaily = mode === "daily" && stats.lastDailyKey === dayKey;
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
 
   useEffect(() => {
     void refreshScores().catch(() => undefined);
