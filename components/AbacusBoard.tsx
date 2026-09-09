@@ -17,7 +17,7 @@ function Bead({ active, heaven = false, onClick, disabled }: BeadProps) {
       onClick={onClick}
       aria-pressed={active}
       className={[
-        "bead relative z-10 h-8 w-[88%] max-w-[52px] rounded-full border transition-all duration-200",
+        "bead relative z-10 h-9 w-[90%] max-w-[56px] touch-manipulation rounded-full border transition-all duration-200 sm:h-8 sm:max-w-[52px]",
         "shadow-[inset_0_2px_4px_rgba(255,255,255,0.28),0_4px_10px_rgba(0,0,0,0.35)]",
         "disabled:cursor-not-allowed disabled:opacity-60",
         "active:bead-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber",
@@ -48,7 +48,7 @@ export function Rod({ rod, label, onChange, disabled }: RodProps) {
 
   return (
     <div className="flex w-[14%] min-w-[52px] max-w-[72px] flex-col items-center">
-      <div className="relative flex h-[280px] w-full flex-col items-center rounded-sm bg-gradient-to-b from-wood-light to-wood px-1 py-2 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.35)]">
+      <div className="relative flex h-[300px] w-full flex-col items-center rounded-sm bg-gradient-to-b from-wood-light to-wood px-1 py-2 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.35)] sm:h-[280px]">
         <div className="pointer-events-none absolute inset-y-2 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-beam/80" />
 
         <div className="relative z-10 flex h-[72px] w-full flex-col items-center justify-start gap-1 pt-1">
