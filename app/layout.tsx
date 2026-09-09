@@ -2,7 +2,7 @@ import {
   Syne,
   IBM_Plex_Mono,
 } from "next/font/google";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 const syne = Syne({
@@ -19,9 +19,33 @@ const ibm = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Soroban — Abacus Arena",
+  title: {
+    default: "Soroban Arena",
+    template: "%s · Soroban Arena",
+  },
   description:
-    "Slide the beads. Beat the clock. Climb the leaderboard on a living digital soroban.",
+    "Slide the beads. Beat the clock. Climb the public leaderboard or race a rival on a living digital soroban.",
+  applicationName: "Soroban Arena",
+  keywords: ["soroban", "abacus", "math game", "race", "leaderboard"],
+  openGraph: {
+    title: "Soroban Arena",
+    description:
+      "A timed digital soroban with public scores and 1v1 bead races.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Soroban Arena",
+    description:
+      "A timed digital soroban with public scores and 1v1 bead races.",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0e0c0b",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
