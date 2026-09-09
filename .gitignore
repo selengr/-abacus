@@ -27,6 +27,10 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+
+# local durable store (scores + rooms without Upstash)
+.data/
 
 # vercel
 .vercel
