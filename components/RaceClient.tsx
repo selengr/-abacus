@@ -47,6 +47,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const inviteMode = Boolean(initialCode);
 
   const [rods, setRods] = useState<RodState[]>(() => emptyRods());
   const [problem, setProblem] = useState<Problem | null>(null);
@@ -347,11 +348,22 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
       {!room && (
         <section className="animate-rise mx-auto mt-8 w-full max-w-lg">
           <h2 className="text-center text-4xl font-semibold tracking-tight">
-            Same beads.
-            <span className="block text-lacquer">Faster hands win.</span>
+            {inviteMode ? (
+              <>
+                You’re invited.
+                <span className="block text-lacquer">Enter and race.</span>
+              </>
+            ) : (
+              <>
+                Same beads.
+                <span className="block text-lacquer">Faster hands win.</span>
+              </>
+            )}
           </h2>
           <p className="mt-4 text-center text-ash">
-            Create a room, share the code, and race the same seeded problems.
+            {inviteMode
+              ? `Room ${initialCode} is waiting. Add your name and join.`
+              : "Create a room, share the code, and race the same seeded problems."}
           </p>
           <div className="mt-8 space-y-3">
             <input
@@ -361,52 +373,61 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
               maxLength={16}
               className="w-full rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center outline-none focus:border-amber"
             />
-            <div className="flex flex-wrap justify-center gap-2">
-              {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => setDifficulty(level)}
-                  className={[
-                    "rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em]",
-                    difficulty === level
-                      ? "border-lacquer text-lacquer"
-                      : "border-smoke text-ash",
-                  ].join(" ")}
-                >
-                  {level}
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void createRoom()}
-              className="w-full rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white hover:bg-lacquer-deep disabled:opacity-60"
-            >
-              Create room
-            </button>
-            <div className="flex gap-2">
-              <input
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="ROOM CODE"
-                maxLength={5}
-                className="flex-1 rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center font-mono tracking-[0.3em] outline-none focus:border-amber"
-              />
+
+            {inviteMode ? (
               <button
                 type="button"
-                disabled={busy || joinCode.trim().length < 4}
+                disabled={busy}
                 onClick={() => void joinRoom()}
-                className="rounded-full border border-smoke px-5 py-3 text-sm uppercase tracking-[0.18em] text-paper hover:border-amber disabled:opacity-60"
+                className="w-full rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white hover:bg-lacquer-deep disabled:opacity-60"
               >
-                Join
+                Join {initialCode}
               </button>
-            </div>
-            {initialCode && (
-              <p className="text-center text-xs text-amber">
-                Invite code loaded from link
-              </p>
+            ) : (
+              <>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setDifficulty(level)}
+                      className={[
+                        "rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em]",
+                        difficulty === level
+                          ? "border-lacquer text-lacquer"
+                          : "border-smoke text-ash",
+                      ].join(" ")}
+                    >
+                      {level}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void createRoom()}
+                  className="w-full rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white hover:bg-lacquer-deep disabled:opacity-60"
+                >
+                  Create room
+                </button>
+                <div className="flex gap-2">
+                  <input
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                    placeholder="ROOM CODE"
+                    maxLength={5}
+                    className="flex-1 rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center font-mono tracking-[0.3em] outline-none focus:border-amber"
+                  />
+                  <button
+                    type="button"
+                    disabled={busy || joinCode.trim().length < 4}
+                    onClick={() => void joinRoom()}
+                    className="rounded-full border border-smoke px-5 py-3 text-sm uppercase tracking-[0.18em] text-paper hover:border-amber disabled:opacity-60"
+                  >
+                    Join
+                  </button>
+                </div>
+              </>
             )}
             {error && <p className="text-center text-sm text-lacquer">{error}</p>}
           </div>
