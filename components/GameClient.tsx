@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AbacusBoard } from "@/components/AbacusBoard";
 import {
@@ -13,7 +13,13 @@ import {
   type Problem,
   type RodState,
 } from "@/lib/abacus";
-import { loadScores, saveScore, type ScoreEntry } from "@/lib/scores";
+import {
+  getScoresServerSnapshot,
+  getScoresSnapshot,
+  saveScore,
+  subscribeScores,
+  type ScoreEntry,
+} from "@/lib/scores";
 
 const ROUND_SECONDS = 90;
 
@@ -28,17 +34,25 @@ export function GameClient() {
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
   const [name, setName] = useState("");
-  const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
   const [flash, setFlash] = useState<"ok" | "miss" | null>(null);
   const startedAt = useRef<number>(Date.now());
   const solvedRef = useRef(false);
+  const streakRef = useRef(0);
+  const difficultyRef = useRef<Difficulty>(difficulty);
+  const problemRef = useRef<Problem | null>(null);
+
+  const scoresJson = useSyncExternalStore(
+    subscribeScores,
+    getScoresSnapshot,
+    getScoresServerSnapshot,
+  );
+  const leaderboard = useMemo(
+    () => JSON.parse(scoresJson) as ScoreEntry[],
+    [scoresJson],
+  );
 
   const value = useMemo(() => abacusValue(rods), [rods]);
   const matched = problem !== null && value === problem.answer && running;
-
-  useEffect(() => {
-    setLeaderboard(loadScores());
-  }, []);
 
   useEffect(() => {
     if (!running || finished) return;
@@ -56,43 +70,56 @@ export function GameClient() {
     return () => window.clearInterval(id);
   }, [running, finished]);
 
-  useEffect(() => {
-    if (!matched || !problem || !running || solvedRef.current) return;
-    solvedRef.current = true;
-    const gained = scoreForSolve({
-      difficulty,
-      elapsedMs: Date.now() - startedAt.current,
-      streak: streak + 1,
-    });
-    setScore((s) => s + gained);
-    setSolved((n) => n + 1);
-    setStreak((n) => n + 1);
-    setFlash("ok");
-    window.setTimeout(() => {
-      setFlash(null);
-      nextProblem();
-    }, 650);
-  }, [matched, problem, running, difficulty, streak]);
-
-  function nextProblem() {
-    const p = generateProblem(difficulty);
+  const nextProblem = useCallback(() => {
+    const p = generateProblem(difficultyRef.current);
+    problemRef.current = p;
     setProblem(p);
     setRods(emptyRods());
     startedAt.current = Date.now();
     solvedRef.current = false;
-  }
+  }, []);
+
+  const handleRodsChange = useCallback(
+    (next: RodState[]) => {
+      setRods(next);
+      const current = problemRef.current;
+      if (!current || !running || solvedRef.current) return;
+      if (abacusValue(next) !== current.answer) return;
+
+      solvedRef.current = true;
+      const nextStreak = streakRef.current + 1;
+      streakRef.current = nextStreak;
+      const gained = scoreForSolve({
+        difficulty: difficultyRef.current,
+        elapsedMs: Date.now() - startedAt.current,
+        streak: nextStreak,
+      });
+      setScore((s) => s + gained);
+      setSolved((n) => n + 1);
+      setStreak(nextStreak);
+      setFlash("ok");
+      window.setTimeout(() => {
+        setFlash(null);
+        nextProblem();
+      }, 650);
+    },
+    [running, nextProblem],
+  );
 
   function startGame(level: Difficulty = difficulty) {
     setDifficulty(level);
+    difficultyRef.current = level;
     setScore(0);
     setSolved(0);
     setStreak(0);
+    streakRef.current = 0;
     setSecondsLeft(ROUND_SECONDS);
     setFinished(false);
     setRunning(true);
     setName("");
     setFlash(null);
     const p = generateProblem(level);
+    problemRef.current = p;
     setProblem(p);
     setRods(emptyRods());
     startedAt.current = Date.now();
@@ -107,13 +134,18 @@ export function GameClient() {
 
   function submitScore() {
     const trimmed = name.trim().slice(0, 16) || "Player";
-    const ranked = saveScore({
+    saveScore({
       name: trimmed,
       score,
       difficulty,
       solved,
     });
-    setLeaderboard(ranked);
+  }
+
+  function skipProblem() {
+    setStreak(0);
+    streakRef.current = 0;
+    nextProblem();
   }
 
   return (
@@ -183,7 +215,7 @@ export function GameClient() {
 
           <AbacusBoard
             rods={rods}
-            onChange={setRods}
+            onChange={handleRodsChange}
             matched={matched}
           />
 
@@ -197,7 +229,7 @@ export function GameClient() {
             </button>
             <button
               type="button"
-              onClick={() => nextProblem()}
+              onClick={skipProblem}
               className="rounded-full border border-smoke px-4 py-2 text-sm text-ash transition hover:border-paper hover:text-paper"
             >
               Skip
