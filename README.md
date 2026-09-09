@@ -1,21 +1,35 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Soroban — Abacus Arena
 
-## Getting Started
+A timed digital soroban you can share: slide beads, match sums, earn points, and climb a local leaderboard.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router)
+- React 19
+- Tailwind CSS 4
+- TypeScript
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Play
+
+- Landing: `/`
+- Arena: `/play`
+- Difficulties: easy · medium · hard
+- Scores save in the browser (`localStorage`)
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
+npm run build
+npm start
+npm run lint
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-## a simple abacus project which it's backend is not still ready to serve
