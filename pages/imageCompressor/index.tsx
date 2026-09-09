@@ -3,9 +3,21 @@ import imageCompression from "browser-image-compression";
 import Card from "react-bootstrap/Card";
 
 
-export default class imageCompressor extends React.Component {
-    constructor() {
-        super();
+type ImageCompressorState = {
+    compressedLink: string;
+    originalImage: File | string;
+    originalLink: string;
+    clicked: boolean;
+    uploadImage: boolean;
+    outputFileName?: string;
+};
+
+export default class imageCompressor extends React.Component<
+    Record<string, never>,
+    ImageCompressorState
+> {
+    constructor(props: Record<string, never>) {
+        super(props);
         this.state = {
             compressedLink:
                 "http://navparivartan.in/wp-content/uploads/2018/11/placeholder.png",
