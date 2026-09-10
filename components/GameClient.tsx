@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AbacusBoard } from "@/components/AbacusBoard";
+import { AchievementsPanel } from "@/components/AchievementsPanel";
 import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
 import { Leaderboard } from "@/components/Leaderboard";
 import { SoundToggle } from "@/components/SoundToggle";
@@ -19,6 +20,11 @@ import {
   type Problem,
   type RodState,
 } from "@/lib/abacus";
+import {
+  ACHIEVEMENTS,
+  evaluateAchievements,
+  type AchievementId,
+} from "@/lib/achievements";
 import { dailySeed, formatDayLabel, todayKey } from "@/lib/daily";
 import {
   getScoresServerSnapshot,
@@ -86,6 +92,9 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [newBest, setNewBest] = useState(false);
+  const [freshAchievements, setFreshAchievements] = useState<AchievementId[]>(
+    [],
+  );
 
   const startedAt = useRef(0);
   const solvedLock = useRef(false);
@@ -144,13 +153,21 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     setFinished(true);
     const peakStreak = Math.max(bestStreakRef.current, streakRef.current);
     const finalScore = scoreLive.current;
-    recordRun({
+    const recorded = recordRun({
       score: finalScore,
       solved: solvedLive.current,
       streak: peakStreak,
       dailyKey: modeRef.current === "daily" ? dayKeyRef.current : null,
     });
     setNewBest(finalScore > bestAtStartRef.current && finalScore > 0);
+    const unlocked = evaluateAchievements({
+      solved: solvedLive.current,
+      streak: peakStreak,
+      score: finalScore,
+      gamesPlayed: recorded.gamesPlayed,
+      daily: modeRef.current === "daily",
+    });
+    setFreshAchievements(unlocked);
   }, []);
 
   useEffect(() => {
@@ -244,6 +261,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     setFlash(null);
     setSaveMessage(null);
     setNewBest(false);
+    setFreshAchievements([]);
     endedRef.current = false;
     bestAtStartRef.current = stats.bestScore;
     dailySeedRef.current = dailySeed();
@@ -415,6 +433,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
           </div>
 
           <StatsPanel />
+          <AchievementsPanel />
         </section>
       )}
 
@@ -487,6 +506,14 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
               New personal best
             </p>
           )}
+          {freshAchievements.length > 0 && (
+            <ul className="mt-3 space-y-1 font-mono text-sm text-amber">
+              {freshAchievements.map((id) => {
+                const item = ACHIEVEMENTS.find((a) => a.id === id);
+                return <li key={id}>Unlocked · {item?.title ?? id}</li>;
+              })}
+            </ul>
+          )}
           <p className="mt-2 text-ash">
             {solved} solved
             {mode === "daily"
@@ -523,10 +550,16 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             Play again
           </button>
           <StatsPanel />
+          <AchievementsPanel />
         </section>
       )}
 
-      {mode !== "practice" && <Leaderboard entries={leaderboard} />}
+      {mode !== "practice" && (
+        <Leaderboard
+          entries={leaderboard}
+          defaultFilter={mode === "daily" ? "daily" : "all"}
+        />
+      )}
     </div>
   );
 }
