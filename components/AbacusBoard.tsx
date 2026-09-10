@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { RodState } from "@/lib/abacus";
 
 type BeadProps = {
@@ -36,18 +37,40 @@ function Bead({ active, heaven = false, onClick, disabled }: BeadProps) {
 type RodProps = {
   rod: RodState;
   label: string;
+  selected?: boolean;
+  onSelect?: () => void;
   onChange: (next: RodState) => void;
   disabled?: boolean;
 };
 
-export function Rod({ rod, label, onChange, disabled }: RodProps) {
+export function Rod({
+  rod,
+  label,
+  selected,
+  onSelect,
+  onChange,
+  disabled,
+}: RodProps) {
   const setEarth = (count: number) => {
     if (disabled) return;
     onChange({ ...rod, earth: rod.earth === count ? count - 1 : count });
   };
 
   return (
-    <div className="flex w-[14%] min-w-[52px] max-w-[72px] flex-col items-center">
+    <div
+      className={[
+        "flex w-[14%] min-w-[52px] max-w-[72px] flex-col items-center rounded-lg transition",
+        selected ? "ring-2 ring-amber/70 ring-offset-2 ring-offset-[#24170f]" : "",
+      ].join(" ")}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onSelect}
+        className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ash hover:text-amber"
+      >
+        {label}
+      </button>
       <div className="relative flex h-[300px] w-full flex-col items-center rounded-sm bg-gradient-to-b from-wood-light to-wood px-1 py-2 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.35)] sm:h-[280px]">
         <div className="pointer-events-none absolute inset-y-2 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-beam/80" />
 
@@ -73,7 +96,6 @@ export function Rod({ rod, label, onChange, disabled }: RodProps) {
           ))}
         </div>
       </div>
-      <span className="mt-2 font-mono text-xs tracking-widest text-ash">{label}</span>
     </div>
   );
 }
@@ -93,6 +115,52 @@ export function AbacusBoard({
   disabled,
   matched,
 }: AbacusBoardProps) {
+  const [selected, setSelected] = useState(Math.max(rods.length - 1, 0));
+  const activeRod = Math.min(selected, Math.max(rods.length - 1, 0));
+
+  useEffect(() => {
+    if (disabled) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setSelected((s) => Math.max(0, Math.min(s, rods.length - 1) - 1));
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setSelected((s) =>
+          Math.min(rods.length - 1, Math.min(s, rods.length - 1) + 1),
+        );
+        return;
+      }
+      if (event.key.toLowerCase() === "h" || event.key === "5") {
+        event.preventDefault();
+        const copy = [...rods];
+        const rod = copy[activeRod];
+        if (!rod) return;
+        copy[activeRod] = { ...rod, heaven: !rod.heaven };
+        onChange(copy);
+        return;
+      }
+      if (/^[0-4]$/.test(event.key)) {
+        event.preventDefault();
+        const earth = Number(event.key);
+        const copy = [...rods];
+        const rod = copy[activeRod];
+        if (!rod) return;
+        copy[activeRod] = { ...rod, earth };
+        onChange(copy);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeRod, disabled, onChange, rods]);
+
   return (
     <div
       className={[
@@ -100,18 +168,25 @@ export function AbacusBoard({
         matched ? "match-glow" : "",
       ].join(" ")}
     >
-      <div className="mb-3 flex items-center justify-between px-1">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
         <p className="text-[11px] uppercase tracking-[0.28em] text-ash">
           Soroban
         </p>
-        <p className="font-mono text-xs text-amber">heaven 5 · earth 1</p>
+        <p className="font-mono text-[10px] text-amber sm:text-xs">
+          arrows · 0-4 earth · H/5 heaven
+        </p>
       </div>
       <div className="flex justify-center gap-1 sm:gap-2">
         {rods.map((rod, index) => (
           <Rod
             key={index}
             rod={rod}
-            label={PLACE_LABELS[PLACE_LABELS.length - rods.length + index] ?? `${10 ** (rods.length - 1 - index)}`}
+            selected={activeRod === index}
+            onSelect={() => setSelected(index)}
+            label={
+              PLACE_LABELS[PLACE_LABELS.length - rods.length + index] ??
+              `${10 ** (rods.length - 1 - index)}`
+            }
             disabled={disabled}
             onChange={(next) => {
               const copy = [...rods];
