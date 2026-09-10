@@ -1,6 +1,29 @@
 import Link from "next/link";
 import { SiteNav } from "@/components/SiteNav";
 
+const MODES = [
+  {
+    href: "/play/daily",
+    label: "Daily",
+    detail: "One shared seeded board every UTC day.",
+  },
+  {
+    href: "/play",
+    label: "Timed",
+    detail: "Ninety seconds. Easy, medium, or hard.",
+  },
+  {
+    href: "/play/practice",
+    label: "Practice",
+    detail: "No clock. Warm up the beads.",
+  },
+  {
+    href: "/play/race",
+    label: "Race",
+    detail: "Invite a rival. Same problems. Faster hands win.",
+  },
+] as const;
+
 export default function HomePage() {
   return (
     <main className="relative z-10 flex min-h-dvh flex-col">
@@ -9,10 +32,10 @@ export default function HomePage() {
           <p className="text-[11px] uppercase tracking-[0.4em] text-ash">
             Digital soroban
           </p>
-          <SiteNav active="/" />
+          <SiteNav />
         </div>
 
-        <section className="relative flex flex-1 flex-col justify-center py-16">
+        <section className="relative flex flex-1 flex-col justify-center py-12 sm:py-16">
           <div
             aria-hidden
             className="pointer-events-none absolute -left-10 top-1/4 h-64 w-64 rounded-full bg-lacquer/20 blur-3xl"
@@ -45,15 +68,25 @@ export default function HomePage() {
             >
               Timed solo
             </Link>
-            <Link
-              href="/play/race"
-              className="rounded-full border border-smoke px-8 py-4 text-sm font-medium uppercase tracking-[0.22em] text-paper transition hover:border-amber hover:text-amber"
-            >
-              Race
-            </Link>
           </div>
+
+          <div className="animate-rise-late mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {MODES.map((mode) => (
+              <Link
+                key={mode.href}
+                href={mode.href}
+                className="rounded-2xl border border-smoke/80 bg-ink-soft/40 p-4 transition hover:border-amber/50 hover:bg-ink-soft/70"
+              >
+                <p className="text-[11px] uppercase tracking-[0.28em] text-amber">
+                  {mode.label}
+                </p>
+                <p className="mt-2 text-sm text-ash">{mode.detail}</p>
+              </Link>
+            ))}
+          </div>
+
           <p className="animate-rise-late mt-6 font-mono text-xs text-ash">
-            daily · practice · public scores · 1v1 rooms
+            open at http://localhost:3010 · port 3000 may be another app
           </p>
         </section>
 
