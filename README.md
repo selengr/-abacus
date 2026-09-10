@@ -18,7 +18,9 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3010](http://localhost:3010).
+
+> Note: this app uses **port 3010** so it does not collide with other local apps on 3000.
 
 ## Play
 
@@ -33,7 +35,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 - **Daily challenge** — one seeded board for everyone each UTC day
 - **Practice mode** — untimed warm-ups
-- **Personal stats** — local bests, streak, and daily history
+- **Achievements** — unlock badges for streaks, scores, and daily clears
+- **Keyboard controls** — arrow keys select a rod; `0-4` set earth beads; `H`/`5` toggle heaven
 - **Public leaderboard** — scores post through the API (file/memory locally, Upstash Redis in production if configured)
 - **Sound** — bead clicks, success, timer ticks, mute toggle
 - **Multiplayer race** — create/join a room code or invite link, same seeded problems, live rival score
