@@ -37,6 +37,10 @@ Open [http://localhost:3010](http://localhost:3010).
 - **Practice mode** — untimed warm-ups
 - **Achievements** — unlock badges for streaks, scores, and daily clears
 - **Keyboard controls** — arrow keys select a rod; `0-4` set earth beads; `H`/`5` toggle heaven
+- **Combo toasts** — floating score feedback on each solve
+- **Share results** — copy or native-share your run
+- **Race countdown** — shared 3-2-1 freeze before beads unlock
+- **Installable PWA manifest** — add to home screen friendly
 - **Public leaderboard** — scores post through the API (file/memory locally, Upstash Redis in production if configured)
 - **Sound** — bead clicks, success, timer ticks, mute toggle
 - **Multiplayer race** — create/join a room code or invite link, same seeded problems, live rival score
