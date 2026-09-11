@@ -1,6 +1,7 @@
 export type PersonalStats = {
   gamesPlayed: number;
   totalSolved: number;
+  totalSkipped: number;
   bestScore: number;
   bestStreak: number;
   lastDailyKey: string | null;
@@ -14,6 +15,7 @@ const CHANGE_EVENT = "soroban-stats-changed";
 const EMPTY: PersonalStats = {
   gamesPlayed: 0,
   totalSolved: 0,
+  totalSkipped: 0,
   bestScore: 0,
   bestStreak: 0,
   lastDailyKey: null,
@@ -47,6 +49,7 @@ function saveStats(next: PersonalStats) {
 export function recordRun(params: {
   score: number;
   solved: number;
+  skipped?: number;
   streak: number;
   dailyKey?: string | null;
 }): PersonalStats {
@@ -55,6 +58,7 @@ export function recordRun(params: {
     ...current,
     gamesPlayed: current.gamesPlayed + 1,
     totalSolved: current.totalSolved + params.solved,
+    totalSkipped: current.totalSkipped + (params.skipped ?? 0),
     bestScore: Math.max(current.bestScore, params.score),
     bestStreak: Math.max(current.bestStreak, params.streak),
   };
@@ -66,6 +70,12 @@ export function recordRun(params: {
   }
 
   return saveStats(next);
+}
+
+export function accuracyPercent(stats: PersonalStats): number {
+  const attempts = stats.totalSolved + stats.totalSkipped;
+  if (attempts === 0) return 0;
+  return Math.round((stats.totalSolved / attempts) * 100);
 }
 
 export function subscribeStats(onStoreChange: () => void) {
