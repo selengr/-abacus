@@ -315,8 +315,9 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
   function skipProblem() {
     if (!room || room.status !== "playing") return;
     if (countdown !== null && countdown > 0) return;
+    const brokeStreak = streakRef.current > 0;
     streakRef.current = 0;
-    playSound("skip");
+    playSound(brokeStreak ? "break" : "skip");
     const nextIndex = problemIndexRef.current + 1;
     loadProblem(room, nextIndex);
     void syncProgress("progress");
