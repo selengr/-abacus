@@ -23,7 +23,13 @@ export function loadPreferences(): Preferences {
   if (typeof window === "undefined") return { ...DEFAULTS };
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULTS };
+    if (!raw) {
+      return {
+        ...DEFAULTS,
+        reduceMotion: window.matchMedia("(prefers-reduced-motion: reduce)")
+          .matches,
+      };
+    }
     return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Preferences>) };
   } catch {
     return { ...DEFAULTS };
