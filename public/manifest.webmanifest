@@ -1,0 +1,17 @@
+{
+  "name": "Soroban Arena",
+  "short_name": "Soroban",
+  "description": "Timed digital soroban with daily challenges, races, and a public leaderboard.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0c0b",
+  "theme_color": "#0e0c0b",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}
