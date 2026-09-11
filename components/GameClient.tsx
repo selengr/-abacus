@@ -4,8 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import Link from "next/link";
 import { AbacusBoard } from "@/components/AbacusBoard";
 import { AchievementsPanel } from "@/components/AchievementsPanel";
+import { Celebration } from "@/components/Celebration";
+import { ComboToast } from "@/components/ComboToast";
 import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
 import { Leaderboard } from "@/components/Leaderboard";
+import { ShareScoreButton } from "@/components/ShareScoreButton";
 import { SoundToggle } from "@/components/SoundToggle";
 import { StatsPanel } from "@/components/StatsPanel";
 import {
@@ -26,6 +29,7 @@ import {
   type AchievementId,
 } from "@/lib/achievements";
 import { dailySeed, formatDayLabel, todayKey } from "@/lib/daily";
+import { loadPlayerName, savePlayerName } from "@/lib/player";
 import {
   getScoresServerSnapshot,
   getScoresSnapshot,
@@ -95,6 +99,8 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const [freshAchievements, setFreshAchievements] = useState<AchievementId[]>(
     [],
   );
+  const [comboPoints, setComboPoints] = useState<number | null>(null);
+  const [comboStreak, setComboStreak] = useState(0);
 
   const startedAt = useRef(0);
   const solvedLock = useRef(false);
@@ -231,10 +237,13 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
         return nextSolved;
       });
       setStreak(nextStreak);
+      setComboPoints(gained);
+      setComboStreak(nextStreak);
       setFlash("ok");
       playSound("success");
       window.setTimeout(() => {
         setFlash(null);
+        setComboPoints(null);
         loadNext();
       }, 650);
     },
@@ -257,11 +266,13 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     setSecondsLeft(ROUND_SECONDS);
     setFinished(false);
     setRunning(true);
-    setName("");
+    setName(loadPlayerName());
     setFlash(null);
     setSaveMessage(null);
     setNewBest(false);
     setFreshAchievements([]);
+    setComboPoints(null);
+    setComboStreak(0);
     endedRef.current = false;
     bestAtStartRef.current = stats.bestScore;
     dailySeedRef.current = dailySeed();
@@ -278,7 +289,8 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   }
 
   async function submitScore() {
-    const trimmed = name.trim().slice(0, 16) || "Player";
+    const trimmed = savePlayerName(name || "Player") || "Player";
+    setName(trimmed);
     setSaving(true);
     setSaveMessage(null);
     try {
@@ -306,6 +318,8 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   return (
     <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-6 sm:px-6">
       <HowToPlay />
+      <Celebration active={finished && newBest} />
+      <ComboToast points={comboPoints} streak={comboStreak} />
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Link href="/" className="group">
           <p className="text-[11px] uppercase tracking-[0.35em] text-ash transition group-hover:text-paper">
@@ -542,13 +556,26 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             </div>
           )}
           {saveMessage && <p className="mt-3 text-sm text-ash">{saveMessage}</p>}
-          <button
-            type="button"
-            onClick={() => startGame(difficulty)}
-            className="mt-4 text-sm text-ash underline-offset-4 hover:text-paper hover:underline"
-          >
-            Play again
-          </button>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <ShareScoreButton
+              score={score}
+              solved={solved}
+              modeLabel={
+                mode === "daily"
+                  ? "Daily"
+                  : mode === "practice"
+                    ? "Practice"
+                    : `Timed ${difficulty}`
+              }
+            />
+            <button
+              type="button"
+              onClick={() => startGame(difficulty)}
+              className="text-sm text-ash underline-offset-4 hover:text-paper hover:underline"
+            >
+              Play again
+            </button>
+          </div>
           <StatsPanel />
           <AchievementsPanel />
         </section>
