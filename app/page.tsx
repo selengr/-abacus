@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DailyResetClock } from "@/components/DailyResetClock";
 import { SiteNav } from "@/components/SiteNav";
 
 const MODES = [
@@ -55,6 +56,10 @@ export default function HomePage() {
             Slide lacquer beads against the beam. Match the sum. Climb the
             public board, crush the daily, or race a rival.
           </p>
+          <div className="animate-rise-late mt-8">
+            <DailyResetClock className="text-sm" />
+          </div>
+
           <div className="animate-rise-late mt-10 flex flex-wrap items-center gap-4">
             <Link
               href="/play/daily"
