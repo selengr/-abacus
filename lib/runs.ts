@@ -43,6 +43,12 @@ export function saveRun(
   return ranked;
 }
 
+export function clearRuns(): RunRecord[] {
+  window.localStorage.setItem(STORAGE_KEY, "[]");
+  emit();
+  return [];
+}
+
 export function subscribeRuns(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {};
   const handler = () => onStoreChange();
