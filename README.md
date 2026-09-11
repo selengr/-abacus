@@ -40,6 +40,9 @@ Open [http://localhost:3010](http://localhost:3010).
 - **Combo toasts** — floating score feedback on each solve
 - **Share results** — copy or native-share your run
 - **Race countdown** — shared 3-2-1 freeze before beads unlock
+- **Race pace meter** — live solved-count comparison vs rival
+- **Problem history strip** — recent solves and skips in-session
+- **Daily reset clock** — countdown to the next UTC daily board
 - **Installable PWA manifest** — add to home screen friendly
 - **Public leaderboard** — scores post through the API (file/memory locally, Upstash Redis in production if configured)
 - **Sound** — bead clicks, success, timer ticks, mute toggle
