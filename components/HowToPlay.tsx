@@ -72,6 +72,10 @@ const STEPS = [
     title: "Read the rods",
     body: "Rods are place values from left to right: ten-thousands down to ones. Match the sum on the board.",
   },
+  {
+    title: "Keyboard shortcuts",
+    body: "Arrow keys pick a rod. Keys 0-4 set earth beads. H or 5 toggles the heaven bead.",
+  },
 ];
 
 export function HowToPlay() {
