@@ -5,6 +5,7 @@ const LINKS = [
   { href: "/play/daily", label: "Daily" },
   { href: "/play/practice", label: "Practice" },
   { href: "/play/race", label: "Race" },
+  { href: "/settings", label: "Settings" },
 ] as const;
 
 export function SiteNav({ active }: { active?: string }) {
