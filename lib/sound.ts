@@ -1,7 +1,15 @@
 const MUTE_KEY = "soroban-mute-v1";
 const MUTE_EVENT = "soroban-mute-changed";
 
-type SoundName = "bead" | "success" | "clear" | "skip" | "tick" | "end" | "start";
+type SoundName =
+  | "bead"
+  | "success"
+  | "clear"
+  | "skip"
+  | "break"
+  | "tick"
+  | "end"
+  | "start";
 
 let ctx: AudioContext | null = null;
 let muted = false;
@@ -103,6 +111,11 @@ export function playSound(name: SoundName) {
     case "skip":
       tone(260, 0.08, "square", 0.025);
       tone(200, 0.1, "square", 0.02, 0.06);
+      break;
+    case "break":
+      tone(220, 0.07, "sawtooth", 0.035);
+      tone(165, 0.12, "square", 0.03, 0.05);
+      tone(110, 0.16, "triangle", 0.04, 0.12);
       break;
     case "tick":
       tone(880, 0.04, "sine", 0.04);
