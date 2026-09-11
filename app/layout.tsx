@@ -3,6 +3,7 @@ import {
   IBM_Plex_Mono,
 } from "next/font/google";
 import type { Metadata, Viewport } from "next";
+import { PreferencesBoot } from "@/components/PreferencesBoot";
 import "./globals.css";
 
 const syne = Syne({
@@ -56,7 +57,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${syne.variable} ${ibm.variable}`}>
-      <body className="grain min-h-dvh font-display antialiased">{children}</body>
+      <body className="grain min-h-dvh font-display antialiased">
+        <PreferencesBoot />
+        {children}
+      </body>
     </html>
   );
 }
