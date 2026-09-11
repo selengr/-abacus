@@ -187,6 +187,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
       streak: peakStreak,
       score: finalScore,
       gamesPlayed: recorded.gamesPlayed,
+      skipped: skippedLive.current,
       daily: modeRef.current === "daily",
     });
     setFreshAchievements(unlocked);
@@ -332,6 +333,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
 
   function skipProblem() {
     const current = problemRef.current;
+    const brokeStreak = streakRef.current > 0;
     setStreak(0);
     streakRef.current = 0;
     skippedLive.current += 1;
@@ -341,7 +343,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
         { expression: formatProblem(current), points: 0, skipped: true },
       ]);
     }
-    playSound("skip");
+    playSound(brokeStreak ? "break" : "skip");
     loadNext();
   }
 
