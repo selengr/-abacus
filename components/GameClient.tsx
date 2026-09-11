@@ -6,8 +6,14 @@ import { AbacusBoard } from "@/components/AbacusBoard";
 import { AchievementsPanel } from "@/components/AchievementsPanel";
 import { Celebration } from "@/components/Celebration";
 import { ComboToast } from "@/components/ComboToast";
+import { DailyResetClock } from "@/components/DailyResetClock";
 import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
 import { Leaderboard } from "@/components/Leaderboard";
+import {
+  ProblemHistory,
+  type HistoryEntry,
+} from "@/components/ProblemHistory";
+import { RecentRuns } from "@/components/RecentRuns";
 import { ShareScoreButton } from "@/components/ShareScoreButton";
 import { SoundToggle } from "@/components/SoundToggle";
 import { StatsPanel } from "@/components/StatsPanel";
@@ -30,6 +36,7 @@ import {
 } from "@/lib/achievements";
 import { dailySeed, formatDayLabel, todayKey } from "@/lib/daily";
 import { loadPlayerName, savePlayerName } from "@/lib/player";
+import { saveRun } from "@/lib/runs";
 import {
   getScoresServerSnapshot,
   getScoresSnapshot,
@@ -101,6 +108,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   );
   const [comboPoints, setComboPoints] = useState<number | null>(null);
   const [comboStreak, setComboStreak] = useState(0);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   const startedAt = useRef(0);
   const solvedLock = useRef(false);
@@ -114,6 +122,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const dayKeyRef = useRef(todayKey());
   const scoreLive = useRef(0);
   const solvedLive = useRef(0);
+  const skippedLive = useRef(0);
   const bestAtStartRef = useRef(0);
   const modeRef = useRef(mode);
 
@@ -162,8 +171,15 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     const recorded = recordRun({
       score: finalScore,
       solved: solvedLive.current,
+      skipped: skippedLive.current,
       streak: peakStreak,
       dailyKey: modeRef.current === "daily" ? dayKeyRef.current : null,
+    });
+    saveRun({
+      mode: modeRef.current,
+      score: finalScore,
+      solved: solvedLive.current,
+      skipped: skippedLive.current,
     });
     setNewBest(finalScore > bestAtStartRef.current && finalScore > 0);
     const unlocked = evaluateAchievements({
@@ -239,6 +255,10 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
       setStreak(nextStreak);
       setComboPoints(gained);
       setComboStreak(nextStreak);
+      setHistory((prev) => [
+        ...prev,
+        { expression: formatProblem(current), points: gained },
+      ]);
       setFlash("ok");
       playSound("success");
       window.setTimeout(() => {
@@ -259,6 +279,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     setStreak(0);
     scoreLive.current = 0;
     solvedLive.current = 0;
+    skippedLive.current = 0;
     streakRef.current = 0;
     bestStreakRef.current = 0;
     problemIndexRef.current = 0;
@@ -273,6 +294,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     setFreshAchievements([]);
     setComboPoints(null);
     setComboStreak(0);
+    setHistory([]);
     endedRef.current = false;
     bestAtStartRef.current = stats.bestScore;
     dailySeedRef.current = dailySeed();
@@ -309,8 +331,16 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   }
 
   function skipProblem() {
+    const current = problemRef.current;
     setStreak(0);
     streakRef.current = 0;
+    skippedLive.current += 1;
+    if (current) {
+      setHistory((prev) => [
+        ...prev,
+        { expression: formatProblem(current), points: 0, skipped: true },
+      ]);
+    }
     playSound("skip");
     loadNext();
   }
@@ -387,6 +417,11 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
               improve.
             </p>
           )}
+          {mode === "daily" && (
+            <div className="mt-4 flex justify-center">
+              <DailyResetClock />
+            </div>
+          )}
 
           {mode === "timed" && (
             <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -447,6 +482,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
           </div>
 
           <StatsPanel />
+          <RecentRuns />
           <AchievementsPanel />
         </section>
       )}
@@ -480,6 +516,8 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             onChange={handleRodsChange}
             matched={matched}
           />
+
+          <ProblemHistory entries={history} />
 
           <div className="flex flex-wrap justify-center gap-3">
             <button
@@ -577,6 +615,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             </button>
           </div>
           <StatsPanel />
+          <RecentRuns />
           <AchievementsPanel />
         </section>
       )}
