@@ -78,6 +78,10 @@ export function accuracyPercent(stats: PersonalStats): number {
   return Math.round((stats.totalSolved / attempts) * 100);
 }
 
+export function clearStats(): PersonalStats {
+  return saveStats({ ...EMPTY });
+}
+
 export function subscribeStats(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {};
   const handler = () => onStoreChange();
