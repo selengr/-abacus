@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { clearAchievements } from "@/lib/achievements";
 import {
-  loadPlayerName,
+  getPlayerNameServerSnapshot,
+  getPlayerNameSnapshot,
   savePlayerName,
+  subscribePlayerName,
 } from "@/lib/player";
 import {
   type AccentTheme,
@@ -54,13 +56,15 @@ export function SettingsPanel() {
     getMuteServerSnapshot,
   );
   const muted = mutedFlag === "1";
-  const [name, setName] = useState("");
+  const storedName = useSyncExternalStore(
+    subscribePlayerName,
+    getPlayerNameSnapshot,
+    getPlayerNameServerSnapshot,
+  );
+  const [nameDraft, setNameDraft] = useState<string | null>(null);
+  const name = nameDraft ?? storedName;
   const [savedFlash, setSavedFlash] = useState(false);
   const [resetFlash, setResetFlash] = useState(false);
-
-  useEffect(() => {
-    setName(loadPlayerName());
-  }, []);
 
   function patchPrefs(partial: Partial<Preferences>) {
     savePreferences({ ...loadPreferences(), ...partial });
@@ -68,6 +72,7 @@ export function SettingsPanel() {
 
   function saveName() {
     savePlayerName(name);
+    setNameDraft(null);
     setSavedFlash(true);
     window.setTimeout(() => setSavedFlash(false), 1400);
     playSound("tick");
@@ -102,7 +107,7 @@ export function SettingsPanel() {
           <input
             value={name}
             maxLength={16}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setNameDraft(e.target.value)}
             placeholder="Your name"
             className="min-w-[12rem] flex-1 rounded-xl border border-smoke bg-ink/60 px-4 py-3 font-mono text-sm text-paper outline-none transition focus:border-amber"
           />
