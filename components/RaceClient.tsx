@@ -7,6 +7,7 @@ import { ComboToast } from "@/components/ComboToast";
 import { CopyInviteButton } from "@/components/CopyInviteButton";
 import { CountdownOverlay } from "@/components/CountdownOverlay";
 import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
+import { PaceMeter } from "@/components/PaceMeter";
 import { ShareScoreButton } from "@/components/ShareScoreButton";
 import { SoundToggle } from "@/components/SoundToggle";
 import {
@@ -525,6 +526,12 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
               solved={rival?.solved ?? 0}
             />
           </div>
+          <PaceMeter
+            youSolved={solved}
+            rivalSolved={rival?.solved ?? 0}
+            youLabel={me?.name ?? "You"}
+            rivalLabel={rival?.name ?? "Rival"}
+          />
           <div className="text-center">
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-ash">
               {secondsLeft}s · problem {problemIndex + 1}
