@@ -12,17 +12,19 @@ export function DailyResetClock({
   label = "New daily in",
   className = "",
 }: DailyResetClockProps) {
-  const [remaining, setRemaining] = useState(0);
-  const [ready, setReady] = useState(false);
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   useEffect(() => {
-    const tick = () => {
+    const id = window.setInterval(() => {
       setRemaining(msUntilNextUtcDay());
-      setReady(true);
+    }, 1000);
+    const boot = window.setTimeout(() => {
+      setRemaining(msUntilNextUtcDay());
+    }, 0);
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(boot);
     };
-    tick();
-    const id = window.setInterval(tick, 1000);
-    return () => window.clearInterval(id);
   }, []);
 
   return (
@@ -34,7 +36,7 @@ export function DailyResetClock({
     >
       {label}{" "}
       <span className="text-amber">
-        {ready ? formatDuration(remaining) : "--:--:--"}
+        {remaining === null ? "--:--:--" : formatDuration(remaining)}
       </span>
     </p>
   );
