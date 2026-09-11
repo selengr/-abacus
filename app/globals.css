@@ -22,6 +22,40 @@
   color-scheme: dark;
 }
 
+html[data-accent="jade"] {
+  --color-lacquer: #2f9e6e;
+  --color-lacquer-deep: #1d6b4a;
+  --color-amber: #8fd4a8;
+  --color-amber-hot: #b6ebc6;
+}
+
+html[data-accent="indigo"] {
+  --color-lacquer: #4f6fd8;
+  --color-lacquer-deep: #31499a;
+  --color-amber: #9bb0f0;
+  --color-amber-hot: #c4d0ff;
+}
+
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-reduce-motion="false"]) *,
+  html:not([data-reduce-motion="false"]) *::before,
+  html:not([data-reduce-motion="false"]) *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 html,
 body {
   min-height: 100%;
