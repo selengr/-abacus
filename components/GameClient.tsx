@@ -371,6 +371,12 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
           </button>
           <SoundToggle />
           <Link
+            href="/settings"
+            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
+          >
+            Settings
+          </Link>
+          <Link
             href="/play/race"
             className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-lacquer hover:text-lacquer"
           >
