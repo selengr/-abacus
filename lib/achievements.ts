@@ -5,7 +5,8 @@ export type AchievementId =
   | "score-1k"
   | "score-3k"
   | "daily-done"
-  | "games-10";
+  | "games-10"
+  | "perfect-run";
 
 export type Achievement = {
   id: AchievementId;
@@ -49,6 +50,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     title: "Regular",
     detail: "Play 10 games.",
   },
+  {
+    id: "perfect-run",
+    title: "Clean board",
+    detail: "Solve 8+ with zero skips in one run.",
+  },
 ];
 
 const STORAGE_KEY = "soroban-achievements-v1";
@@ -90,11 +96,17 @@ export function unlockAchievements(candidates: AchievementId[]): AchievementId[]
   return freshly;
 }
 
+export function clearAchievements(): AchievementId[] {
+  saveUnlocked([]);
+  return [];
+}
+
 export function evaluateAchievements(params: {
   solved: number;
   streak: number;
   score: number;
   gamesPlayed: number;
+  skipped?: number;
   daily?: boolean;
 }): AchievementId[] {
   const next: AchievementId[] = [];
@@ -105,6 +117,9 @@ export function evaluateAchievements(params: {
   if (params.score >= 3000) next.push("score-3k");
   if (params.daily) next.push("daily-done");
   if (params.gamesPlayed >= 10) next.push("games-10");
+  if (params.solved >= 8 && (params.skipped ?? 0) === 0) {
+    next.push("perfect-run");
+  }
   return unlockAchievements(next);
 }
 
