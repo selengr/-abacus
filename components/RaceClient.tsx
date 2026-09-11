@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AbacusBoard } from "@/components/AbacusBoard";
+import { ComboToast } from "@/components/ComboToast";
 import { CopyInviteButton } from "@/components/CopyInviteButton";
+import { CountdownOverlay } from "@/components/CountdownOverlay";
 import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
+import { ShareScoreButton } from "@/components/ShareScoreButton";
 import { SoundToggle } from "@/components/SoundToggle";
 import {
   abacusValue,
@@ -16,12 +19,15 @@ import {
   type Problem,
   type RodState,
 } from "@/lib/abacus";
+import { loadPlayerName, savePlayerName } from "@/lib/player";
 import { playSound } from "@/lib/sound";
 import type { Room } from "@/lib/types";
 
 function nowMs() {
   return Date.now();
 }
+
+const RACE_COUNTDOWN_SEC = 3;
 
 type PublicRoom = Omit<Room, "players"> & {
   players: Array<{
@@ -56,6 +62,9 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
   const [solved, setSolved] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(90);
   const [flash, setFlash] = useState<"ok" | "miss" | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [comboPoints, setComboPoints] = useState<number | null>(null);
+  const [comboStreak, setComboStreak] = useState(0);
 
   const startedAt = useRef(0);
   const solvedRef = useRef(false);
@@ -92,11 +101,13 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
     setBusy(true);
     setError(null);
     try {
+      const display = savePlayerName(name || loadPlayerName() || "Host") || "Host";
+      setName(display);
       const res = await fetch("/api/rooms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim() || "Host",
+          name: display,
           difficulty,
         }),
       });
@@ -122,11 +133,13 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
     setBusy(true);
     setError(null);
     try {
+      const display = savePlayerName(name || loadPlayerName() || "Rival") || "Rival";
+      setName(display);
       const code = joinCode.trim().toUpperCase();
       const res = await fetch(`/api/rooms/${code}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() || "Rival" }),
+        body: JSON.stringify({ name: display }),
       });
       const data = (await res.json()) as {
         room?: PublicRoom;
@@ -212,14 +225,26 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
       streakRef.current = 0;
       setScore(0);
       setSolved(0);
+      setComboPoints(null);
+      setComboStreak(0);
       loadProblem(room, 0);
       playSound("start");
     }
 
-    const startedAtMs = room.startedAt;
+    const serverStarted = room.startedAt;
+    const playStart = serverStarted + RACE_COUNTDOWN_SEC * 1000;
     const roundSeconds = room.roundSeconds;
     const tick = window.setInterval(() => {
-      const elapsed = Math.floor((nowMs() - startedAtMs) / 1000);
+      const now = nowMs();
+      const untilPlay = playStart - now;
+      if (untilPlay > 0) {
+        const nextCount = Math.ceil(untilPlay / 1000);
+        setCountdown(nextCount);
+        setSecondsLeft(roundSeconds);
+        return;
+      }
+      setCountdown(null);
+      const elapsed = Math.floor((now - playStart) / 1000);
       const left = Math.max(0, roundSeconds - elapsed);
       setSecondsLeft(left);
       if (left <= 10 && left > 0) playSound("tick");
@@ -228,7 +253,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
         playSound("end");
         void syncProgress("finish");
       }
-    }, 250);
+    }, 100);
     return () => window.clearInterval(tick);
   }, [room?.status, room?.startedAt, room, loadProblem, syncProgress]);
 
@@ -242,6 +267,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
   const handleRodsChange = useCallback(
     (next: RodState[]) => {
       if (room?.status !== "playing") return;
+      if (countdown !== null && countdown > 0) return;
       playSound("bead");
       setRods(next);
       const current = problemRef.current;
@@ -263,16 +289,19 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
       solvedCountRef.current = nextSolved;
       setScore(nextScore);
       setSolved(nextSolved);
+      setComboPoints(gained);
+      setComboStreak(nextStreak);
       setFlash("ok");
       playSound("success");
       void syncProgress("progress");
       window.setTimeout(() => {
         setFlash(null);
+        setComboPoints(null);
         loadProblem(room, nextIndex);
         void syncProgress("progress");
       }, 550);
     },
-    [room, loadProblem, syncProgress],
+    [countdown, room, loadProblem, syncProgress],
   );
 
   function resetBoard() {
@@ -284,6 +313,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
 
   function skipProblem() {
     if (!room || room.status !== "playing") return;
+    if (countdown !== null && countdown > 0) return;
     streakRef.current = 0;
     playSound("skip");
     const nextIndex = problemIndexRef.current + 1;
@@ -301,6 +331,9 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
     setSolved(0);
     setProblemIndex(0);
     setFlash(null);
+    setCountdown(null);
+    setComboPoints(null);
+    setComboStreak(0);
     setRods(emptyRods());
     playingStarted.current = false;
     finishedSent.current = false;
@@ -314,10 +347,13 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
     room?.status === "finished"
       ? [...room.players].sort((a, b) => b.score - a.score)[0]
       : null;
+  const boardLocked = Boolean(countdown && countdown > 0);
 
   return (
     <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 py-6 sm:px-6">
       <HowToPlay />
+      <CountdownOverlay value={countdown} />
+      <ComboToast points={comboPoints} streak={comboStreak} />
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Link href="/play" className="group">
           <p className="text-[11px] uppercase tracking-[0.35em] text-ash transition group-hover:text-paper">
@@ -512,19 +548,22 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
             rods={rods}
             onChange={handleRodsChange}
             matched={matched}
+            disabled={boardLocked}
           />
           <div className="flex gap-3">
             <button
               type="button"
               onClick={resetBoard}
-              className="rounded-full border border-smoke px-4 py-2 text-sm text-ash hover:border-paper hover:text-paper"
+              disabled={boardLocked}
+              className="rounded-full border border-smoke px-4 py-2 text-sm text-ash hover:border-paper hover:text-paper disabled:opacity-40"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={skipProblem}
-              className="rounded-full border border-smoke px-4 py-2 text-sm text-ash hover:border-paper hover:text-paper"
+              disabled={boardLocked}
+              className="rounded-full border border-smoke px-4 py-2 text-sm text-ash hover:border-paper hover:text-paper disabled:opacity-40"
             >
               Skip
             </button>
@@ -557,13 +596,20 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
                 </li>
               ))}
           </ul>
-          <button
-            type="button"
-            onClick={resetLobby}
-            className="mt-8 inline-block rounded-full border border-smoke px-6 py-3 text-sm uppercase tracking-[0.18em]"
-          >
-            New race
-          </button>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <ShareScoreButton
+              score={score}
+              solved={solved}
+              modeLabel={`Race ${room.code}`}
+            />
+            <button
+              type="button"
+              onClick={resetLobby}
+              className="rounded-full border border-smoke px-6 py-3 text-sm uppercase tracking-[0.18em]"
+            >
+              New race
+            </button>
+          </div>
         </section>
       )}
     </div>
