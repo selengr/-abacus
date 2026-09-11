@@ -27,6 +27,7 @@ export const metadata: Metadata = {
     "Slide the beads. Beat the clock. Climb the public leaderboard or race a rival on a living digital soroban.",
   applicationName: "Soroban Arena",
   keywords: ["soroban", "abacus", "math game", "race", "leaderboard"],
+  manifest: "/manifest.webmanifest",
   openGraph: {
     title: "Soroban Arena",
     description:
