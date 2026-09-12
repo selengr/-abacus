@@ -24,17 +24,17 @@ export const DIFFICULTY_META: Record<
   easy: {
     label: "Easy",
     points: 100,
-    detail: "Two small addends · soft pace",
+    detail: "Small numbers. Great to start.",
   },
   medium: {
     label: "Medium",
     points: 200,
-    detail: "Bigger two-number sums",
+    detail: "Bigger numbers.",
   },
   hard: {
     label: "Hard",
     points: 350,
-    detail: "Three addends · sharper hands",
+    detail: "Three numbers. Extra challenge.",
   },
 };
 
