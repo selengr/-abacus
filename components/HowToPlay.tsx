@@ -82,28 +82,28 @@ type Step =
 const STEPS: Step[] = [
   {
     kind: "text",
-    title: "Heaven bead = 5",
-    body: "The single bead above the beam is worth five. Tap it toward the beam to count it.",
+    title: "Top bead = 5",
+    body: "The bead above the bar is worth 5. Tap it toward the bar to turn it on.",
   },
   {
     kind: "text",
-    title: "Earth beads = 1",
-    body: "The four beads below the beam are worth one each. Slide them up to the beam to add.",
+    title: "Bottom beads = 1",
+    body: "Each bead under the bar is worth 1. Slide them up to add.",
   },
   {
     kind: "try",
-    title: "Make it read 7",
-    body: "Heaven (5) plus two earth beads (2). Match 7 on the ones rod to unlock Next.",
+    title: "Try: make 7",
+    body: "Turn on the top bead (5) and two bottom beads (2). When it shows 7, tap Next.",
   },
   {
     kind: "text",
-    title: "Keyboard shortcuts",
-    body: "Arrow keys pick a rod. Keys 0-4 set earth beads. H or 5 toggles the heaven bead.",
+    title: "Keyboard (optional)",
+    body: "Arrow keys pick a rod. Numbers 0–4 set bottom beads. H or 5 flips the top bead.",
   },
   {
     kind: "done",
-    title: "You’re ready",
-    body: "Pick a mode and trust your hands. You can reopen this guide anytime.",
+    title: "You’re ready!",
+    body: "Pick a mode and start. You can open this guide again anytime.",
   },
 ];
 
@@ -137,7 +137,7 @@ export function HowToPlay() {
       aria-labelledby="howto-title"
     >
       <div className="animate-rise max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-smoke bg-ink-soft p-6 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
-        <p className="text-[11px] uppercase tracking-[0.3em] text-ash">
+        <p className="text-sm text-ash">
           How to play · {index + 1}/{STEPS.length}
         </p>
         <h2
@@ -241,9 +241,9 @@ export function HowToPlay() {
               setStep(index + 1);
               playSound("tick");
             }}
-            className="flex-1 rounded-full bg-lacquer px-4 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white transition hover:bg-lacquer-deep disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex-1 rounded-full bg-lacquer px-4 py-3 text-base font-medium text-white transition hover:bg-lacquer-deep disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {last ? "Got it" : tryStep && !matched ? "Match 7 first" : "Next"}
+            {last ? "Got it" : tryStep && !matched ? "Make 7 first" : "Next"}
           </button>
         </div>
       </div>
