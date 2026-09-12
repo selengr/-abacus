@@ -1,5 +1,9 @@
 import { promises as fs } from "fs";
 import path from "path";
+import {
+  filterScoresByPeriod,
+  type ScorePeriod,
+} from "@/lib/score-period";
 import type { Room, RoomPlayer, ScoreEntry } from "@/lib/types";
 
 export type { Room, RoomPlayer, ScoreEntry };
@@ -9,7 +13,7 @@ type StoreShape = {
   rooms: Record<string, Room>;
 };
 
-const MAX_SCORES = 50;
+const MAX_SCORES = 150;
 const ROOM_TTL_MS = 1000 * 60 * 60;
 const DATA_DIR = path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "store.json");
@@ -98,19 +102,26 @@ function pruneRooms(rooms: Record<string, Room>) {
   }
 }
 
-export async function listScores(): Promise<ScoreEntry[]> {
+export async function listScores(
+  period: ScorePeriod = "all",
+): Promise<ScoreEntry[]> {
+  let scores: ScoreEntry[] = [];
   if (hasUpstash()) {
     const raw = await upstash<string | null>(["GET", "soroban:scores"]);
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw) as ScoreEntry[];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as ScoreEntry[];
+        scores = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        scores = [];
+      }
     }
+  } else {
+    await ensureFileLoaded();
+    scores = [...globalBag().memory.scores];
   }
-  await ensureFileLoaded();
-  return [...globalBag().memory.scores].sort(
+
+  return filterScoresByPeriod(scores, period).sort(
     (a, b) => b.score - a.score || a.createdAt - b.createdAt,
   );
 }
