@@ -27,9 +27,9 @@ import {
 import { clearStats } from "@/lib/stats";
 
 const ACCENTS: { id: AccentTheme; label: string; swatch: string }[] = [
-  { id: "lacquer", label: "Lacquer", swatch: "#e23a28" },
-  { id: "jade", label: "Jade", swatch: "#2f9e6e" },
-  { id: "indigo", label: "Indigo", swatch: "#4f6fd8" },
+  { id: "lacquer", label: "Red", swatch: "#e23a28" },
+  { id: "jade", label: "Green", swatch: "#2f9e6e" },
+  { id: "indigo", label: "Blue", swatch: "#4f6fd8" },
 ];
 
 function getMuteSnapshot() {
@@ -81,7 +81,7 @@ export function SettingsPanel() {
   function resetLocal() {
     if (
       !window.confirm(
-        "Clear local stats, recent runs, and achievements? Your name and theme stay.",
+        "Clear your scores and badges on this device? Your name and colors stay.",
       )
     ) {
       return;
@@ -97,11 +97,9 @@ export function SettingsPanel() {
   return (
     <section className="space-y-8">
       <div className="rounded-2xl border border-smoke/70 bg-ink-soft/40 p-5">
-        <h2 className="text-[11px] uppercase tracking-[0.3em] text-ash">
-          Player name
-        </h2>
+        <h2 className="text-base font-medium text-paper">Your name</h2>
         <p className="mt-2 text-sm text-ash">
-          Used when you post to the public board or host a race.
+          Shown when you save a score or race a friend.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <input
@@ -125,12 +123,8 @@ export function SettingsPanel() {
       </div>
 
       <div className="rounded-2xl border border-smoke/70 bg-ink-soft/40 p-5">
-        <h2 className="text-[11px] uppercase tracking-[0.3em] text-ash">
-          Accent
-        </h2>
-        <p className="mt-2 text-sm text-ash">
-          Lacquer red, jade green, or indigo blue for beads and CTAs.
-        </p>
+        <h2 className="text-base font-medium text-paper">Colors</h2>
+        <p className="mt-2 text-sm text-ash">Pick a look you like.</p>
         <div className="mt-4 flex flex-wrap gap-3">
           {ACCENTS.map((accent) => {
             const active = prefs.accent === accent.id;
@@ -162,9 +156,7 @@ export function SettingsPanel() {
       </div>
 
       <div className="rounded-2xl border border-smoke/70 bg-ink-soft/40 p-5">
-        <h2 className="text-[11px] uppercase tracking-[0.3em] text-ash">
-          Comfort
-        </h2>
+        <h2 className="text-base font-medium text-paper">Sound & motion</h2>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button
             type="button"
@@ -174,9 +166,9 @@ export function SettingsPanel() {
               setMuted(next);
               if (!next) playSound("tick");
             }}
-            className="rounded-full border border-smoke bg-ink/50 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
+            className="rounded-full border border-smoke bg-ink/50 px-4 py-2.5 text-sm text-ash transition hover:border-paper hover:text-paper"
           >
-            {muted ? "Sound off" : "Sound on"}
+            {muted ? "Mute" : "Sound"}
           </button>
           <button
             type="button"
@@ -186,33 +178,31 @@ export function SettingsPanel() {
               playSound("tick");
             }}
             className={[
-              "rounded-full border px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.18em] transition",
+              "rounded-full border px-4 py-2.5 text-sm transition",
               prefs.reduceMotion
                 ? "border-amber text-amber"
                 : "border-smoke text-ash hover:border-paper hover:text-paper",
             ].join(" ")}
           >
-            {prefs.reduceMotion ? "Motion reduced" : "Full motion"}
+            {prefs.reduceMotion ? "Less motion" : "Motion on"}
           </button>
         </div>
       </div>
 
       <div className="rounded-2xl border border-smoke/70 bg-ink-soft/40 p-5">
-        <h2 className="text-[11px] uppercase tracking-[0.3em] text-ash">
-          Local data
-        </h2>
+        <h2 className="text-base font-medium text-paper">Reset</h2>
         <p className="mt-2 text-sm text-ash">
-          Wipe stats, recent runs, and badges on this device. Public scores stay.
+          Clear scores and badges saved on this device.
         </p>
         <button
           type="button"
           onClick={resetLocal}
-          className="mt-4 rounded-full border border-lacquer/50 px-5 py-2.5 text-xs font-medium uppercase tracking-[0.2em] text-lacquer transition hover:bg-lacquer/10"
+          className="mt-4 rounded-full border border-lacquer/50 px-5 py-2.5 text-sm text-lacquer transition hover:bg-lacquer/10"
         >
-          Reset local progress
+          Clear my progress
         </button>
         {resetFlash && (
-          <p className="mt-2 font-mono text-xs text-amber">Local ledger cleared.</p>
+          <p className="mt-2 text-sm text-amber">Cleared.</p>
         )}
       </div>
     </section>

@@ -20,9 +20,8 @@ export default function SettingsPage() {
         </Link>
         <SiteNav active="/settings" />
       </header>
-      <p className="mb-6 max-w-md text-sm text-ash">
-        Tune accent color, sound, motion, and your player name. Everything here
-        stays on this device.
+      <p className="mb-6 max-w-md text-base text-ash">
+        Change your name, colors, and sound. Saved only on this device.
       </p>
       <SettingsPanel />
     </main>
