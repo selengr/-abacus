@@ -358,8 +358,8 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
       <CountdownOverlay value={countdown} />
       <ComboToast points={comboPoints} streak={comboStreak} />
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <Link href="/play" className="group">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-ash transition group-hover:text-paper">
+        <Link href="/" className="group">
+          <p className="text-sm text-ash transition group-hover:text-paper">
             Soroban
           </p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -367,48 +367,34 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
           </h1>
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => openHowToPlay()}
-            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
-          >
-            How to
-          </button>
+          {!room && (
+            <button
+              type="button"
+              onClick={() => openHowToPlay()}
+              className="rounded-full border border-smoke bg-ink-soft/80 px-4 py-2 text-sm text-ash transition hover:border-paper hover:text-paper"
+            >
+              How to play
+            </button>
+          )}
           <SoundToggle />
-          <Link
-            href="/settings"
-            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
-          >
-            Settings
-          </Link>
           {room && (
-            <div className="rounded-xl border border-smoke bg-ink-soft/80 px-3 py-2 font-mono text-sm">
-              <span className="text-ash">room </span>
-              <span className="text-amber">{room.code}</span>
+            <div className="rounded-2xl border border-smoke bg-ink-soft/80 px-4 py-2 text-base">
+              <span className="text-ash">Code </span>
+              <span className="font-medium text-amber">{room.code}</span>
             </div>
           )}
         </div>
       </header>
 
       {!room && (
-        <section className="animate-rise mx-auto mt-8 w-full max-w-lg">
+        <section className="animate-rise mx-auto mt-8 w-full max-w-md">
           <h2 className="text-center text-4xl font-semibold tracking-tight">
-            {inviteMode ? (
-              <>
-                You’re invited.
-                <span className="block text-lacquer">Enter and race.</span>
-              </>
-            ) : (
-              <>
-                Same beads.
-                <span className="block text-lacquer">Faster hands win.</span>
-              </>
-            )}
+            {inviteMode ? "Join the race" : "Race a friend"}
           </h2>
-          <p className="mt-4 text-center text-ash">
+          <p className="mt-4 text-center text-lg text-ash">
             {inviteMode
-              ? `Room ${initialCode} is waiting. Add your name and join.`
-              : "Create a room, share the code, and race the same seeded problems."}
+              ? "Type your name and tap Join."
+              : "Make a room, share the code, and see who is faster."}
           </p>
           <div className="mt-8 space-y-3">
             <input
@@ -416,7 +402,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               maxLength={16}
-              className="w-full rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center outline-none focus:border-amber"
+              className="w-full rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center text-base outline-none focus:border-amber"
             />
 
             {inviteMode ? (
@@ -424,12 +410,13 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
                 type="button"
                 disabled={busy}
                 onClick={() => void joinRoom()}
-                className="w-full rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white hover:bg-lacquer-deep disabled:opacity-60"
+                className="w-full rounded-full bg-lacquer px-5 py-4 text-base font-medium text-white hover:bg-lacquer-deep disabled:opacity-60"
               >
                 Join {initialCode}
               </button>
             ) : (
               <>
+                <p className="text-center text-sm text-ash">Pick a level</p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
                     <button
@@ -437,13 +424,13 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
                       type="button"
                       onClick={() => setDifficulty(level)}
                       className={[
-                        "rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em]",
+                        "rounded-full border px-5 py-2.5 text-base",
                         difficulty === level
                           ? "border-lacquer text-lacquer"
                           : "border-smoke text-ash",
                       ].join(" ")}
                     >
-                      {DIFFICULTY_META[level].label} · {DIFFICULTY_META[level].points}
+                      {DIFFICULTY_META[level].label}
                     </button>
                   ))}
                 </div>
@@ -451,23 +438,23 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
                   type="button"
                   disabled={busy}
                   onClick={() => void createRoom()}
-                  className="w-full rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white hover:bg-lacquer-deep disabled:opacity-60"
+                  className="w-full rounded-full bg-lacquer px-5 py-4 text-base font-medium text-white hover:bg-lacquer-deep disabled:opacity-60"
                 >
-                  Create room
+                  Make a room
                 </button>
                 <div className="flex gap-2">
                   <input
                     value={joinCode}
                     onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    placeholder="ROOM CODE"
+                    placeholder="CODE"
                     maxLength={5}
-                    className="flex-1 rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center font-mono tracking-[0.3em] outline-none focus:border-amber"
+                    className="flex-1 rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center font-mono tracking-[0.25em] outline-none focus:border-amber"
                   />
                   <button
                     type="button"
                     disabled={busy || joinCode.trim().length < 4}
                     onClick={() => void joinRoom()}
-                    className="rounded-full border border-smoke px-5 py-3 text-sm uppercase tracking-[0.18em] text-paper hover:border-amber disabled:opacity-60"
+                    className="rounded-full border border-smoke px-5 py-3 text-base text-paper hover:border-amber disabled:opacity-60"
                   >
                     Join
                   </button>
