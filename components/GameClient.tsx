@@ -19,6 +19,7 @@ import { SoundToggle } from "@/components/SoundToggle";
 import { StatsPanel } from "@/components/StatsPanel";
 import {
   ROUND_SECONDS,
+  DIFFICULTY_META,
   abacusValue,
   emptyRods,
   formatProblem,
@@ -35,16 +36,15 @@ import {
   type AchievementId,
 } from "@/lib/achievements";
 import { dailySeed, formatDayLabel, todayKey } from "@/lib/daily";
+import {
+  getDifficultyServerSnapshot,
+  getDifficultySnapshot,
+  saveLastDifficulty,
+  subscribeDifficulty,
+} from "@/lib/difficulty-prefs";
 import { loadPlayerName, savePlayerName } from "@/lib/player";
 import { saveRun } from "@/lib/runs";
-import {
-  getScoresServerSnapshot,
-  getScoresSnapshot,
-  refreshScores,
-  saveScore,
-  subscribeScores,
-  type ScoreEntry,
-} from "@/lib/scores";
+import { saveScore } from "@/lib/scores";
 import { playSound } from "@/lib/sound";
 import {
   getStatsServerSnapshot,
@@ -86,9 +86,18 @@ const MODE_META: Record<
 };
 
 export function GameClient({ mode = "timed" }: GameClientProps) {
-  const [difficulty, setDifficulty] = useState<Difficulty>(
-    mode === "daily" ? "medium" : "easy",
+  const storedDifficulty = useSyncExternalStore(
+    subscribeDifficulty,
+    getDifficultySnapshot,
+    getDifficultyServerSnapshot,
   );
+  const [pickedDifficulty, setPickedDifficulty] = useState<Difficulty | null>(
+    null,
+  );
+  const difficulty =
+    mode === "daily"
+      ? "medium"
+      : (pickedDifficulty ?? storedDifficulty);
   const [rods, setRods] = useState<RodState[]>(() => emptyRods());
   const [problem, setProblem] = useState<Problem | null>(null);
   const [problemIndex, setProblemIndex] = useState(0);
@@ -114,7 +123,9 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const solvedLock = useRef(false);
   const streakRef = useRef(0);
   const bestStreakRef = useRef(0);
-  const difficultyRef = useRef<Difficulty>(mode === "daily" ? "medium" : "easy");
+  const difficultyRef = useRef<Difficulty>(
+    mode === "daily" ? "medium" : "easy",
+  );
   const problemRef = useRef<Problem | null>(null);
   const problemIndexRef = useRef(0);
   const endedRef = useRef(false);
@@ -125,16 +136,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const skippedLive = useRef(0);
   const bestAtStartRef = useRef(0);
   const modeRef = useRef(mode);
-
-  const scoresJson = useSyncExternalStore(
-    subscribeScores,
-    getScoresSnapshot,
-    getScoresServerSnapshot,
-  );
-  const leaderboard = useMemo(
-    () => JSON.parse(scoresJson) as ScoreEntry[],
-    [scoresJson],
-  );
 
   const statsJson = useSyncExternalStore(
     subscribeStats,
@@ -157,8 +158,8 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   }, [mode]);
 
   useEffect(() => {
-    void refreshScores().catch(() => undefined);
-  }, []);
+    difficultyRef.current = difficulty;
+  }, [difficulty]);
 
   const finishRound = useCallback(() => {
     if (endedRef.current) return;
@@ -273,7 +274,10 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
 
   function startGame(level: Difficulty = difficulty) {
     const resolved = mode === "daily" ? "medium" : level;
-    setDifficulty(resolved);
+    if (mode !== "daily") {
+      setPickedDifficulty(resolved);
+      saveLastDifficulty(resolved);
+    }
     difficultyRef.current = resolved;
     setScore(0);
     setSolved(0);
@@ -431,28 +435,60 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             </div>
           )}
 
-          {mode === "timed" && (
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              {(["easy", "medium", "hard"] as Difficulty[]).map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => startGame(level)}
-                  className="rounded-full border border-smoke bg-ink-soft px-5 py-3 text-sm uppercase tracking-[0.2em] text-paper transition hover:border-lacquer hover:text-lacquer"
-                >
-                  {level}
-                </button>
-              ))}
+          {(mode === "timed" || mode === "practice") && (
+            <div className="mt-8 space-y-4">
+              <div className="flex flex-wrap justify-center gap-3">
+                {(["easy", "medium", "hard"] as Difficulty[]).map((level) => {
+                  const metaLevel = DIFFICULTY_META[level];
+                  const active = difficulty === level;
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => {
+                        setPickedDifficulty(level);
+                        saveLastDifficulty(level);
+                        playSound("bead");
+                      }}
+                      className={[
+                        "min-w-[7.5rem] rounded-2xl border px-4 py-3 text-left transition",
+                        active
+                          ? "border-lacquer bg-lacquer/10 text-lacquer"
+                          : "border-smoke bg-ink-soft text-paper hover:border-amber/60",
+                      ].join(" ")}
+                    >
+                      <p className="text-sm font-medium uppercase tracking-[0.18em]">
+                        {metaLevel.label}
+                      </p>
+                      <p className="mt-1 font-mono text-[11px] text-ash">
+                        {metaLevel.points} pts base
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-center text-sm text-ash">
+                {DIFFICULTY_META[difficulty].detail}
+              </p>
+              <button
+                type="button"
+                onClick={() => startGame(difficulty)}
+                className="rounded-full bg-lacquer px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] text-white transition hover:bg-lacquer-deep"
+              >
+                {mode === "timed"
+                  ? `Start ${ROUND_SECONDS}s · ${DIFFICULTY_META[difficulty].label}`
+                  : `Start practice · ${DIFFICULTY_META[difficulty].label}`}
+              </button>
             </div>
           )}
 
-          {mode !== "timed" && (
+          {mode === "daily" && (
             <button
               type="button"
               onClick={() => startGame()}
               className="mt-8 rounded-full bg-lacquer px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] text-white transition hover:bg-lacquer-deep"
             >
-              {mode === "daily" ? "Start daily" : "Start practice"}
+              Start daily
             </button>
           )}
 
@@ -629,10 +665,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
       )}
 
       {mode !== "practice" && (
-        <Leaderboard
-          entries={leaderboard}
-          defaultFilter={mode === "daily" ? "daily" : "all"}
-        />
+        <Leaderboard defaultFilter={mode === "daily" ? "daily" : "week"} />
       )}
     </div>
   );
