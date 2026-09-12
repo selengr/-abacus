@@ -8,9 +8,16 @@ type BeadProps = {
   heaven?: boolean;
   onClick: () => void;
   disabled?: boolean;
+  hint?: boolean;
 };
 
-function Bead({ active, heaven = false, onClick, disabled }: BeadProps) {
+function Bead({
+  active,
+  heaven = false,
+  onClick,
+  disabled,
+  hint = false,
+}: BeadProps) {
   return (
     <button
       type="button"
@@ -29,6 +36,9 @@ function Bead({ active, heaven = false, onClick, disabled }: BeadProps) {
           : active
             ? "border-amber-hot/50 bg-gradient-to-b from-amber-hot to-amber"
             : "border-wood-light/40 bg-gradient-to-b from-[#8a6238] to-[#5a3a20]",
+        hint && !active
+          ? "ring-2 ring-amber/80 ring-offset-1 ring-offset-[#24170f] animate-pulse"
+          : "",
       ].join(" ")}
     />
   );
@@ -36,6 +46,7 @@ function Bead({ active, heaven = false, onClick, disabled }: BeadProps) {
 
 type RodProps = {
   rod: RodState;
+  hint?: RodState | null;
   label: string;
   selected?: boolean;
   onSelect?: () => void;
@@ -46,6 +57,7 @@ type RodProps = {
 
 export function Rod({
   rod,
+  hint,
   label,
   selected,
   onSelect,
@@ -70,7 +82,7 @@ export function Rod({
         type="button"
         disabled={disabled}
         onClick={onSelect}
-        className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ash hover:text-amber"
+        className="mb-1 text-xs text-ash hover:text-amber"
       >
         {label}
       </button>
@@ -91,6 +103,7 @@ export function Rod({
           <Bead
             heaven
             active={rod.heaven}
+            hint={Boolean(hint?.heaven)}
             disabled={disabled}
             onClick={() => onChange({ ...rod, heaven: !rod.heaven })}
           />
@@ -108,6 +121,7 @@ export function Rod({
             <Bead
               key={count}
               active={rod.earth >= count}
+              hint={Boolean(hint && hint.earth >= count)}
               disabled={disabled}
               onClick={() => setEarth(count)}
             />
@@ -124,9 +138,11 @@ type AbacusBoardProps = {
   disabled?: boolean;
   matched?: boolean;
   compact?: boolean;
+  /** Ghost the target bead layout without moving beads. */
+  hintRods?: RodState[] | null;
 };
 
-const PLACE_LABELS = ["10000s", "1000s", "100s", "10s", "1s"];
+const PLACE_LABELS = ["Ten-thousands", "Thousands", "Hundreds", "Tens", "Ones"];
 
 export function AbacusBoard({
   rods,
@@ -134,8 +150,9 @@ export function AbacusBoard({
   disabled,
   matched,
   compact,
+  hintRods = null,
 }: AbacusBoardProps) {
-  const [selected, setSelected] = useState(Math.max(rods.length - 1, 0));
+  const [selected, setSelected] = useState(0);
   const activeRod = Math.min(selected, Math.max(rods.length - 1, 0));
 
   useEffect(() => {
@@ -185,25 +202,28 @@ export function AbacusBoard({
     <div
       className={[
         "w-full rounded-2xl border border-smoke bg-gradient-to-b from-[#3a2818] to-[#24170f] shadow-[0_30px_80px_rgba(0,0,0,0.45)]",
-        compact ? "max-w-xs p-3" : "max-w-3xl p-4 sm:p-6",
+        compact
+          ? "max-w-xs p-3"
+          : rods.length <= 3
+            ? "max-w-xl p-4 sm:p-6"
+            : "max-w-3xl p-4 sm:p-6",
         matched ? "match-glow" : "",
       ].join(" ")}
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-ash">
-          Soroban
-        </p>
+        <p className="text-sm text-ash">Your board</p>
         {!compact && (
-          <p className="font-mono text-[10px] text-amber sm:text-xs">
-            arrows · 0-4 earth · H/5 heaven
+          <p className="text-xs text-amber">
+            arrows · 0-4 bottom · H/5 top
           </p>
         )}
       </div>
-      <div className="flex justify-center gap-1 sm:gap-2">
+      <div className="flex justify-center gap-2 sm:gap-3">
         {rods.map((rod, index) => (
           <Rod
             key={index}
             rod={rod}
+            hint={hintRods?.[index] ?? null}
             compact={compact}
             selected={activeRod === index}
             onSelect={() => setSelected(index)}
