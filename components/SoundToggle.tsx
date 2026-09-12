@@ -35,9 +35,9 @@ export function SoundToggle() {
         setMuted(next);
         if (!next) playSound("tick");
       }}
-      className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
+      className="rounded-full border border-smoke bg-ink-soft/80 px-4 py-2 text-sm text-ash transition hover:border-paper hover:text-paper"
     >
-      {muted ? "Sound off" : "Sound on"}
+      {muted ? "Mute" : "Sound"}
     </button>
   );
 }
