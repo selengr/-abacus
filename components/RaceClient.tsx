@@ -16,6 +16,7 @@ import {
   emptyRods,
   formatProblem,
   problemAt,
+  rodCountForDifficulty,
   scoreForSolve,
   type Difficulty,
   type Problem,
@@ -57,7 +58,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
   const [busy, setBusy] = useState(false);
   const inviteMode = Boolean(initialCode);
 
-  const [rods, setRods] = useState<RodState[]>(() => emptyRods());
+  const [rods, setRods] = useState<RodState[]>(() => emptyRods(2));
   const [problem, setProblem] = useState<Problem | null>(null);
   const [problemIndex, setProblemIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -94,7 +95,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
     setProblem(p);
     setProblemIndex(index);
     problemIndexRef.current = index;
-    setRods(emptyRods());
+    setRods(emptyRods(rodCountForDifficulty(r.difficulty)));
     startedAt.current = nowMs();
     solvedRef.current = false;
   }, []);
@@ -307,7 +308,9 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
   );
 
   function resetBoard() {
-    setRods(emptyRods());
+    setRods(
+      emptyRods(room ? rodCountForDifficulty(room.difficulty) : 2),
+    );
     setFlash("miss");
     playSound("clear");
     window.setTimeout(() => setFlash(null), 400);
@@ -337,7 +340,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
     setCountdown(null);
     setComboPoints(null);
     setComboStreak(0);
-    setRods(emptyRods());
+    setRods(emptyRods(2));
     playingStarted.current = false;
     finishedSent.current = false;
     scoreRef.current = 0;
