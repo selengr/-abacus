@@ -24,19 +24,24 @@ export const DIFFICULTY_META: Record<
   easy: {
     label: "Easy",
     points: 100,
-    detail: "Small numbers. Great to start.",
+    detail: "Small numbers. Two rods only.",
   },
   medium: {
     label: "Medium",
     points: 200,
-    detail: "Bigger numbers.",
+    detail: "Bigger numbers. Three rods.",
   },
   hard: {
     label: "Hard",
     points: 350,
-    detail: "Three numbers. Extra challenge.",
+    detail: "Three numbers. Full board.",
   },
 };
+
+/** How many place-value rods each level uses. */
+export function rodCountForDifficulty(difficulty: Difficulty): number {
+  return { easy: 2, medium: 3, hard: 5 }[difficulty];
+}
 
 export function emptyRods(count = ROD_COUNT): RodState[] {
   return Array.from({ length: count }, () => ({ heaven: false, earth: 0 }));
@@ -53,6 +58,24 @@ export function abacusValue(rods: RodState[]): number {
   }, 0);
 }
 
+/** Encode a single digit 0–9 as heaven/earth beads. */
+export function digitToRod(digit: number): RodState {
+  const d = Math.max(0, Math.min(9, Math.floor(digit)));
+  if (d >= 5) return { heaven: true, earth: d - 5 };
+  return { heaven: false, earth: d };
+}
+
+/** Build the bead layout that equals `answer` on `rodCount` rods. */
+export function answerToRods(answer: number, rodCount: number): RodState[] {
+  const rods = emptyRods(rodCount);
+  let n = Math.max(0, Math.floor(answer));
+  for (let i = rodCount - 1; i >= 0; i -= 1) {
+    rods[i] = digitToRod(n % 10);
+    n = Math.floor(n / 10);
+  }
+  return rods;
+}
+
 function randomInt(rng: Rng, min: number, max: number): number {
   return Math.floor(rng() * (max - min + 1)) + min;
 }
@@ -61,7 +84,7 @@ const DIFFICULTY_RANGES: Record<
   Difficulty,
   { addendCount: number; maxAddend: number; maxAnswer: number }
 > = {
-  easy: { addendCount: 2, maxAddend: 20, maxAnswer: 40 },
+  easy: { addendCount: 2, maxAddend: 9, maxAnswer: 18 },
   medium: { addendCount: 2, maxAddend: 90, maxAnswer: 180 },
   hard: { addendCount: 3, maxAddend: 250, maxAnswer: 750 },
 };
