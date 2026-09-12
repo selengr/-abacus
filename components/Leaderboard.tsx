@@ -10,25 +10,25 @@ import {
 } from "@/lib/scores";
 import type { ScorePeriod } from "@/lib/score-period";
 
-type BoardFilter = ScorePeriod | "daily";
+type BoardFilter = "week" | "day";
 
 const FILTERS: { id: BoardFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "week", label: "Week" },
+  { id: "week", label: "This week" },
   { id: "day", label: "Today" },
-  { id: "daily", label: "Daily" },
 ];
 
 export function Leaderboard({
-  title = "Public leaderboard",
-  defaultFilter = "all",
+  title = "Top scores",
+  defaultFilter = "week",
 }: {
   title?: string;
-  defaultFilter?: BoardFilter;
+  defaultFilter?: BoardFilter | "all" | "daily";
   /** @deprecated entries now load from the scores store */
   entries?: ScoreEntry[];
 }) {
-  const [filter, setFilter] = useState<BoardFilter>(defaultFilter);
+  const initial: BoardFilter =
+    defaultFilter === "day" || defaultFilter === "daily" ? "day" : "week";
+  const [filter, setFilter] = useState<BoardFilter>(initial);
   const scoresJson = useSyncExternalStore(
     subscribeScores,
     getScoresSnapshot,
@@ -40,30 +40,23 @@ export function Leaderboard({
   );
 
   useEffect(() => {
-    const period: ScorePeriod = filter === "daily" ? "all" : filter;
+    const period: ScorePeriod = filter;
     void refreshScores(period).catch(() => undefined);
   }, [filter]);
 
-  const visible = useMemo(() => {
-    if (filter === "daily") {
-      return entries.filter((entry) => entry.difficulty === "daily");
-    }
-    return entries;
-  }, [entries, filter]);
-
   return (
-    <section className="animate-rise-late mt-auto border-t border-smoke/80 pt-6">
+    <section className="mt-10 border-t border-smoke/70 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-[11px] uppercase tracking-[0.3em] text-ash">
-          {title}
-        </h3>
-        <div className="flex flex-wrap gap-3 font-mono text-[11px] uppercase tracking-[0.16em]">
+        <h3 className="text-base font-medium text-paper">{title}</h3>
+        <div className="flex gap-3 text-sm">
           {FILTERS.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setFilter(item.id)}
-              className={filter === item.id ? "text-amber" : "text-ash"}
+              className={
+                filter === item.id ? "text-amber" : "text-ash hover:text-paper"
+              }
             >
               {item.label}
             </button>
@@ -71,27 +64,18 @@ export function Leaderboard({
         </div>
       </div>
 
-      {visible.length === 0 ? (
-        <p className="mt-3 text-sm text-ash">
-          {filter === "week"
-            ? "No scores this week yet."
-            : filter === "day"
-              ? "No scores today yet."
-              : filter === "daily"
-                ? "No daily scores yet."
-                : "No scores yet. Be the first."}
-        </p>
+      {entries.length === 0 ? (
+        <p className="mt-3 text-sm text-ash">No scores yet. Be first!</p>
       ) : (
-        <ol className="mt-3 space-y-2">
-          {visible.map((entry, index) => (
+        <ol className="mt-4 space-y-2">
+          {entries.slice(0, 8).map((entry, index) => (
             <li
               key={entry.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-smoke/70 bg-ink-soft/50 px-3 py-2 font-mono text-sm"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-smoke/60 bg-ink-soft/40 px-4 py-3 text-base"
             >
-              <span className="text-ash">{index + 1}</span>
+              <span className="w-6 text-ash">{index + 1}</span>
               <span className="flex-1 truncate text-paper">{entry.name}</span>
-              <span className="text-ash">{entry.difficulty}</span>
-              <span className="text-amber">{entry.score}</span>
+              <span className="font-medium text-amber">{entry.score}</span>
             </li>
           ))}
         </ol>
