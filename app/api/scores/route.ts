@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
+import { isScorePeriod } from "@/lib/score-period";
 import { addScore, listScores } from "@/lib/server-store";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const scores = await listScores();
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const periodRaw = searchParams.get("period") ?? "all";
+  const period = isScorePeriod(periodRaw) ? periodRaw : "all";
+  const scores = await listScores(period);
   return NextResponse.json(scores.slice(0, 20));
 }
 
