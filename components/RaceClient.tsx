@@ -11,6 +11,7 @@ import { PaceMeter } from "@/components/PaceMeter";
 import { ShareScoreButton } from "@/components/ShareScoreButton";
 import { SoundToggle } from "@/components/SoundToggle";
 import {
+  DIFFICULTY_META,
   abacusValue,
   emptyRods,
   formatProblem,
@@ -442,7 +443,7 @@ export function RaceClient({ initialCode = "" }: RaceClientProps) {
                           : "border-smoke text-ash",
                       ].join(" ")}
                     >
-                      {level}
+                      {DIFFICULTY_META[level].label} · {DIFFICULTY_META[level].points}
                     </button>
                   ))}
                 </div>
