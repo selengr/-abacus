@@ -1,18 +1,48 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { ScoreEntry } from "@/lib/types";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  getScoresServerSnapshot,
+  getScoresSnapshot,
+  refreshScores,
+  subscribeScores,
+  type ScoreEntry,
+} from "@/lib/scores";
+import type { ScorePeriod } from "@/lib/score-period";
+
+type BoardFilter = ScorePeriod | "daily";
+
+const FILTERS: { id: BoardFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "week", label: "Week" },
+  { id: "day", label: "Today" },
+  { id: "daily", label: "Daily" },
+];
 
 export function Leaderboard({
-  entries,
   title = "Public leaderboard",
   defaultFilter = "all",
 }: {
-  entries: ScoreEntry[];
   title?: string;
-  defaultFilter?: "all" | "daily";
+  defaultFilter?: BoardFilter;
+  /** @deprecated entries now load from the scores store */
+  entries?: ScoreEntry[];
 }) {
-  const [filter, setFilter] = useState<"all" | "daily">(defaultFilter);
+  const [filter, setFilter] = useState<BoardFilter>(defaultFilter);
+  const scoresJson = useSyncExternalStore(
+    subscribeScores,
+    getScoresSnapshot,
+    getScoresServerSnapshot,
+  );
+  const entries = useMemo(
+    () => JSON.parse(scoresJson) as ScoreEntry[],
+    [scoresJson],
+  );
+
+  useEffect(() => {
+    const period: ScorePeriod = filter === "daily" ? "all" : filter;
+    void refreshScores(period).catch(() => undefined);
+  }, [filter]);
 
   const visible = useMemo(() => {
     if (filter === "daily") {
@@ -27,26 +57,30 @@ export function Leaderboard({
         <h3 className="text-[11px] uppercase tracking-[0.3em] text-ash">
           {title}
         </h3>
-        <div className="flex gap-2 font-mono text-[11px] uppercase tracking-[0.16em]">
-          <button
-            type="button"
-            onClick={() => setFilter("all")}
-            className={filter === "all" ? "text-amber" : "text-ash"}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("daily")}
-            className={filter === "daily" ? "text-amber" : "text-ash"}
-          >
-            Daily
-          </button>
+        <div className="flex flex-wrap gap-3 font-mono text-[11px] uppercase tracking-[0.16em]">
+          {FILTERS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setFilter(item.id)}
+              className={filter === item.id ? "text-amber" : "text-ash"}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {visible.length === 0 ? (
-        <p className="mt-3 text-sm text-ash">No scores yet. Be the first.</p>
+        <p className="mt-3 text-sm text-ash">
+          {filter === "week"
+            ? "No scores this week yet."
+            : filter === "day"
+              ? "No scores today yet."
+              : filter === "daily"
+                ? "No daily scores yet."
+                : "No scores yet. Be the first."}
+        </p>
       ) : (
         <ol className="mt-3 space-y-2">
           {visible.map((entry, index) => (
