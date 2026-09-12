@@ -41,6 +41,7 @@ type RodProps = {
   onSelect?: () => void;
   onChange: (next: RodState) => void;
   disabled?: boolean;
+  compact?: boolean;
 };
 
 export function Rod({
@@ -50,6 +51,7 @@ export function Rod({
   onSelect,
   onChange,
   disabled,
+  compact,
 }: RodProps) {
   const setEarth = (count: number) => {
     if (disabled) return;
@@ -59,7 +61,8 @@ export function Rod({
   return (
     <div
       className={[
-        "flex w-[14%] min-w-[52px] max-w-[72px] flex-col items-center rounded-lg transition",
+        "flex w-[14%] flex-col items-center rounded-lg transition",
+        compact ? "min-w-[44px] max-w-[56px]" : "min-w-[52px] max-w-[72px]",
         selected ? "ring-2 ring-amber/70 ring-offset-2 ring-offset-[#24170f]" : "",
       ].join(" ")}
     >
@@ -71,10 +74,20 @@ export function Rod({
       >
         {label}
       </button>
-      <div className="relative flex h-[300px] w-full flex-col items-center rounded-sm bg-gradient-to-b from-wood-light to-wood px-1 py-2 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.35)] sm:h-[280px]">
+      <div
+        className={[
+          "relative flex w-full flex-col items-center rounded-sm bg-gradient-to-b from-wood-light to-wood px-1 py-2 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.35)]",
+          compact ? "h-[220px]" : "h-[300px] sm:h-[280px]",
+        ].join(" ")}
+      >
         <div className="pointer-events-none absolute inset-y-2 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-beam/80" />
 
-        <div className="relative z-10 flex h-[72px] w-full flex-col items-center justify-start gap-1 pt-1">
+        <div
+          className={[
+            "relative z-10 flex w-full flex-col items-center justify-start gap-1 pt-1",
+            compact ? "h-[56px]" : "h-[72px]",
+          ].join(" ")}
+        >
           <Bead
             heaven
             active={rod.heaven}
@@ -85,7 +98,12 @@ export function Rod({
 
         <div className="relative z-20 my-1 h-[6px] w-[120%] rounded-sm bg-gradient-to-b from-beam to-[#a89068] shadow-[0_2px_4px_rgba(0,0,0,0.4)]" />
 
-        <div className="relative z-10 flex h-[170px] w-full flex-col-reverse items-center justify-start gap-1 pb-1">
+        <div
+          className={[
+            "relative z-10 flex w-full flex-col-reverse items-center justify-start gap-1 pb-1",
+            compact ? "h-[130px]" : "h-[170px]",
+          ].join(" ")}
+        >
           {[1, 2, 3, 4].map((count) => (
             <Bead
               key={count}
@@ -105,6 +123,7 @@ type AbacusBoardProps = {
   onChange: (rods: RodState[]) => void;
   disabled?: boolean;
   matched?: boolean;
+  compact?: boolean;
 };
 
 const PLACE_LABELS = ["10000s", "1000s", "100s", "10s", "1s"];
@@ -114,6 +133,7 @@ export function AbacusBoard({
   onChange,
   disabled,
   matched,
+  compact,
 }: AbacusBoardProps) {
   const [selected, setSelected] = useState(Math.max(rods.length - 1, 0));
   const activeRod = Math.min(selected, Math.max(rods.length - 1, 0));
@@ -164,7 +184,8 @@ export function AbacusBoard({
   return (
     <div
       className={[
-        "w-full max-w-3xl rounded-2xl border border-smoke bg-gradient-to-b from-[#3a2818] to-[#24170f] p-4 shadow-[0_30px_80px_rgba(0,0,0,0.45)] sm:p-6",
+        "w-full rounded-2xl border border-smoke bg-gradient-to-b from-[#3a2818] to-[#24170f] shadow-[0_30px_80px_rgba(0,0,0,0.45)]",
+        compact ? "max-w-xs p-3" : "max-w-3xl p-4 sm:p-6",
         matched ? "match-glow" : "",
       ].join(" ")}
     >
@@ -172,15 +193,18 @@ export function AbacusBoard({
         <p className="text-[11px] uppercase tracking-[0.28em] text-ash">
           Soroban
         </p>
-        <p className="font-mono text-[10px] text-amber sm:text-xs">
-          arrows · 0-4 earth · H/5 heaven
-        </p>
+        {!compact && (
+          <p className="font-mono text-[10px] text-amber sm:text-xs">
+            arrows · 0-4 earth · H/5 heaven
+          </p>
+        )}
       </div>
       <div className="flex justify-center gap-1 sm:gap-2">
         {rods.map((rod, index) => (
           <Rod
             key={index}
             rod={rod}
+            compact={compact}
             selected={activeRod === index}
             onSelect={() => setSelected(index)}
             label={
