@@ -89,7 +89,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
       : (pickedDifficulty ?? storedDifficulty);
   const [rods, setRods] = useState<RodState[]>(() => emptyRods());
   const [problem, setProblem] = useState<Problem | null>(null);
-  const [problemIndex, setProblemIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [solved, setSolved] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
@@ -203,7 +202,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
       const index = problemIndexRef.current;
       p = problemAt("medium", dailySeedRef.current, index);
       problemIndexRef.current = index + 1;
-      setProblemIndex(index + 1);
     } else {
       p = generateProblem(difficultyRef.current);
     }
@@ -269,7 +267,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     streakRef.current = 0;
     bestStreakRef.current = 0;
     problemIndexRef.current = 0;
-    setProblemIndex(0);
     setSecondsLeft(ROUND_SECONDS);
     setFinished(false);
     setRunning(true);
