@@ -17,6 +17,27 @@ export type Rng = () => number;
 export const ROD_COUNT = 5;
 export const ROUND_SECONDS = 90;
 
+export const DIFFICULTY_META: Record<
+  Difficulty,
+  { label: string; points: number; detail: string }
+> = {
+  easy: {
+    label: "Easy",
+    points: 100,
+    detail: "Two small addends · soft pace",
+  },
+  medium: {
+    label: "Medium",
+    points: 200,
+    detail: "Bigger two-number sums",
+  },
+  hard: {
+    label: "Hard",
+    points: 350,
+    detail: "Three addends · sharper hands",
+  },
+};
+
 export function emptyRods(count = ROD_COUNT): RodState[] {
   return Array.from({ length: count }, () => ({ heaven: false, earth: 0 }));
 }
