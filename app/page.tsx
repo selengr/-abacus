@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { DailyResetClock } from "@/components/DailyResetClock";
+import { HowToPlay } from "@/components/HowToPlay";
+import { HowToPlayButton } from "@/components/HowToPlayButton";
 import { SiteNav } from "@/components/SiteNav";
 
 const MODES = [
@@ -28,6 +30,7 @@ const MODES = [
 export default function HomePage() {
   return (
     <main className="relative z-10 flex min-h-dvh flex-col">
+      <HowToPlay />
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-between px-6 py-8 sm:px-10">
         <div className="animate-rise flex items-center justify-between gap-4">
           <p className="text-[11px] uppercase tracking-[0.4em] text-ash">
@@ -73,6 +76,7 @@ export default function HomePage() {
             >
               Timed solo
             </Link>
+            <HowToPlayButton className="rounded-full border border-smoke px-8 py-4 text-sm font-medium uppercase tracking-[0.22em] text-ash transition hover:border-paper hover:text-paper" />
           </div>
 
           <div className="animate-rise-late mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
