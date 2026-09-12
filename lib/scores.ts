@@ -1,8 +1,10 @@
+import type { ScorePeriod } from "@/lib/score-period";
 import type { ScoreEntry } from "@/lib/types";
 
 export type { ScoreEntry };
 
 let cache = "[]";
+let cachePeriod: ScorePeriod = "all";
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -24,11 +26,19 @@ export function getScoresServerSnapshot() {
   return "[]";
 }
 
-export async function refreshScores(): Promise<ScoreEntry[]> {
-  const res = await fetch("/api/scores", { cache: "no-store" });
+export function getCachedScorePeriod(): ScorePeriod {
+  return cachePeriod;
+}
+
+export async function refreshScores(
+  period: ScorePeriod = "all",
+): Promise<ScoreEntry[]> {
+  const qs = period === "all" ? "" : `?period=${period}`;
+  const res = await fetch(`/api/scores${qs}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load scores");
   const scores = (await res.json()) as ScoreEntry[];
   cache = JSON.stringify(scores);
+  cachePeriod = period;
   emit();
   return scores;
 }
@@ -44,6 +54,7 @@ export async function saveScore(
   if (!res.ok) throw new Error("Failed to save score");
   const scores = (await res.json()) as ScoreEntry[];
   cache = JSON.stringify(scores);
+  cachePeriod = "all";
   emit();
   return scores;
 }
