@@ -1,16 +1,14 @@
 import Link from "next/link";
 
 const LINKS = [
-  { href: "/play", label: "Solo" },
-  { href: "/play/daily", label: "Daily" },
-  { href: "/play/practice", label: "Practice" },
+  { href: "/play", label: "Play" },
   { href: "/play/race", label: "Race" },
   { href: "/settings", label: "Settings" },
 ] as const;
 
 export function SiteNav({ active }: { active?: string }) {
   return (
-    <nav className="flex flex-wrap items-center gap-3 text-sm text-paper/80">
+    <nav className="flex flex-wrap items-center gap-4 text-base text-paper/80">
       {LINKS.map((link) => (
         <Link
           key={link.href}
