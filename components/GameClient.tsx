@@ -13,10 +13,12 @@ import {
   ROUND_SECONDS,
   DIFFICULTY_META,
   abacusValue,
+  answerToRods,
   emptyRods,
   formatProblem,
   generateProblem,
   problemAt,
+  rodCountForDifficulty,
   scoreForSolve,
   type Difficulty,
   type Problem,
@@ -87,7 +89,10 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     mode === "daily"
       ? "medium"
       : (pickedDifficulty ?? storedDifficulty);
-  const [rods, setRods] = useState<RodState[]>(() => emptyRods());
+  const boardRods = rodCountForDifficulty(
+    mode === "daily" ? "medium" : difficulty,
+  );
+  const [rods, setRods] = useState<RodState[]>(() => emptyRods(2));
   const [problem, setProblem] = useState<Problem | null>(null);
   const [score, setScore] = useState(0);
   const [solved, setSolved] = useState(0);
@@ -104,6 +109,8 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   );
   const [comboPoints, setComboPoints] = useState<number | null>(null);
   const [comboStreak, setComboStreak] = useState(0);
+  const [hintRods, setHintRods] = useState<RodState[] | null>(null);
+  const [showHelpNudge, setShowHelpNudge] = useState(false);
 
   const startedAt = useRef(0);
   const solvedLock = useRef(false);
@@ -138,6 +145,11 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const meta = MODE_META[mode];
   const dayKey = todayKey();
   const alreadyDidDaily = mode === "daily" && stats.lastDailyKey === dayKey;
+  const helpAllowed =
+    running &&
+    problem !== null &&
+    (mode === "practice" ||
+      (mode === "timed" && difficulty === "easy"));
 
   useEffect(() => {
     modeRef.current = mode;
@@ -146,6 +158,17 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   useEffect(() => {
     difficultyRef.current = difficulty;
   }, [difficulty]);
+
+  useEffect(() => {
+    if (!helpAllowed || matched || hintRods) return;
+    const id = window.setTimeout(() => setShowHelpNudge(true), 8000);
+    return () => {
+      window.clearTimeout(id);
+    };
+  }, [helpAllowed, matched, hintRods, problem]);
+
+  const helpNudgeVisible =
+    showHelpNudge && helpAllowed && !matched && !hintRods;
 
   const finishRound = useCallback(() => {
     if (endedRef.current) return;
@@ -198,6 +221,9 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
 
   const loadNext = useCallback(() => {
     let p: Problem;
+    const level =
+      modeRef.current === "daily" ? "medium" : difficultyRef.current;
+    const count = rodCountForDifficulty(level);
     if (modeRef.current === "daily") {
       const index = problemIndexRef.current;
       p = problemAt("medium", dailySeedRef.current, index);
@@ -207,7 +233,9 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     }
     problemRef.current = p;
     setProblem(p);
-    setRods(emptyRods());
+    setRods(emptyRods(count));
+    setHintRods(null);
+    setShowHelpNudge(false);
     startedAt.current = nowMs();
     solvedLock.current = false;
   }, []);
@@ -215,6 +243,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const handleRodsChange = useCallback(
     (next: RodState[]) => {
       playSound("bead");
+      setHintRods(null);
       setRods(next);
       const current = problemRef.current;
       if (!current || !running || solvedLock.current) return;
@@ -242,6 +271,7 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
       setComboPoints(gained);
       setComboStreak(nextStreak);
       setFlash("ok");
+      setHintRods(null);
       playSound("success");
       window.setTimeout(() => {
         setFlash(null);
@@ -286,10 +316,28 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   }
 
   function resetBoard() {
-    setRods(emptyRods());
+    setRods(emptyRods(boardRods));
+    setHintRods(null);
     setFlash("miss");
     playSound("clear");
     window.setTimeout(() => setFlash(null), 400);
+  }
+
+  function showHelp() {
+    const current = problemRef.current;
+    if (!current || !helpAllowed) return;
+    setHintRods(answerToRods(current.answer, boardRods));
+    setShowHelpNudge(false);
+    playSound("tick");
+  }
+
+  function skipProblem() {
+    const brokeStreak = streakRef.current > 0;
+    streakRef.current = 0;
+    skippedLive.current += 1;
+    setHintRods(null);
+    playSound(brokeStreak ? "break" : "skip");
+    loadNext();
   }
 
   async function submitScore() {
@@ -310,14 +358,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     } finally {
       setSaving(false);
     }
-  }
-
-  function skipProblem() {
-    const brokeStreak = streakRef.current > 0;
-    streakRef.current = 0;
-    skippedLive.current += 1;
-    playSound(brokeStreak ? "break" : "skip");
-    loadNext();
   }
 
   return (
@@ -465,12 +505,16 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
                 {value}
               </span>
             </p>
+            {helpNudgeVisible && (
+              <p className="mt-2 text-sm text-amber">Stuck? Tap Help.</p>
+            )}
           </div>
 
           <AbacusBoard
             rods={rods}
             onChange={handleRodsChange}
             matched={matched}
+            hintRods={hintRods}
           />
 
           <div className="flex flex-wrap justify-center gap-3">
@@ -481,6 +525,15 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             >
               Clear
             </button>
+            {helpAllowed && (
+              <button
+                type="button"
+                onClick={showHelp}
+                className="rounded-full border border-amber/50 px-5 py-2.5 text-base text-amber transition hover:bg-amber/10"
+              >
+                {hintRods ? "Hints on" : "Help"}
+              </button>
+            )}
             <button
               type="button"
               onClick={skipProblem}
