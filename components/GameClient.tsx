@@ -3,20 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { AbacusBoard } from "@/components/AbacusBoard";
-import { AchievementsPanel } from "@/components/AchievementsPanel";
 import { Celebration } from "@/components/Celebration";
 import { ComboToast } from "@/components/ComboToast";
-import { DailyResetClock } from "@/components/DailyResetClock";
 import { HowToPlay, openHowToPlay } from "@/components/HowToPlay";
 import { Leaderboard } from "@/components/Leaderboard";
-import {
-  ProblemHistory,
-  type HistoryEntry,
-} from "@/components/ProblemHistory";
-import { RecentRuns } from "@/components/RecentRuns";
 import { ShareScoreButton } from "@/components/ShareScoreButton";
 import { SoundToggle } from "@/components/SoundToggle";
-import { StatsPanel } from "@/components/StatsPanel";
 import {
   ROUND_SECONDS,
   DIFFICULTY_META,
@@ -35,7 +27,7 @@ import {
   evaluateAchievements,
   type AchievementId,
 } from "@/lib/achievements";
-import { dailySeed, formatDayLabel, todayKey } from "@/lib/daily";
+import { dailySeed, todayKey } from "@/lib/daily";
 import {
   getDifficultyServerSnapshot,
   getDifficultySnapshot,
@@ -66,22 +58,19 @@ type GameClientProps = {
 
 const MODE_META: Record<
   GameMode,
-  { title: string; eyebrow: string; blurb: string }
+  { title: string; blurb: string }
 > = {
   timed: {
-    title: "Arena",
-    eyebrow: "Timed solo",
-    blurb: `${ROUND_SECONDS} seconds. Harder levels pay more. Scores post to the public board.`,
+    title: "Play",
+    blurb: "You have 90 seconds. Make each sum with the beads.",
   },
   practice: {
     title: "Practice",
-    eyebrow: "No clock",
-    blurb: "Warm up freely. No timer, no pressure — just beads and sums.",
+    blurb: "No timer. Practice as long as you want.",
   },
   daily: {
-    title: "Daily",
-    eyebrow: "Same board worldwide",
-    blurb: "One seeded run for everyone today. Beat yesterday’s hands.",
+    title: "Today",
+    blurb: "One special puzzle for everyone today.",
   },
 };
 
@@ -103,7 +92,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   const [problemIndex, setProblemIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [solved, setSolved] = useState(0);
-  const [streak, setStreak] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -117,7 +105,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   );
   const [comboPoints, setComboPoints] = useState<number | null>(null);
   const [comboStreak, setComboStreak] = useState(0);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   const startedAt = useRef(0);
   const solvedLock = useRef(false);
@@ -254,13 +241,8 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
         solvedLive.current = nextSolved;
         return nextSolved;
       });
-      setStreak(nextStreak);
       setComboPoints(gained);
       setComboStreak(nextStreak);
-      setHistory((prev) => [
-        ...prev,
-        { expression: formatProblem(current), points: gained },
-      ]);
       setFlash("ok");
       playSound("success");
       window.setTimeout(() => {
@@ -281,7 +263,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     difficultyRef.current = resolved;
     setScore(0);
     setSolved(0);
-    setStreak(0);
     scoreLive.current = 0;
     solvedLive.current = 0;
     skippedLive.current = 0;
@@ -299,7 +280,6 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
     setFreshAchievements([]);
     setComboPoints(null);
     setComboStreak(0);
-    setHistory([]);
     endedRef.current = false;
     bestAtStartRef.current = stats.bestScore;
     dailySeedRef.current = dailySeed();
@@ -336,17 +316,9 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
   }
 
   function skipProblem() {
-    const current = problemRef.current;
     const brokeStreak = streakRef.current > 0;
-    setStreak(0);
     streakRef.current = 0;
     skippedLive.current += 1;
-    if (current) {
-      setHistory((prev) => [
-        ...prev,
-        { expression: formatProblem(current), points: 0, skipped: true },
-      ]);
-    }
     playSound(brokeStreak ? "break" : "skip");
     loadNext();
   }
@@ -358,85 +330,58 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
       <ComboToast points={comboPoints} streak={comboStreak} />
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Link href="/" className="group">
-          <p className="text-[11px] uppercase tracking-[0.35em] text-ash transition group-hover:text-paper">
+          <p className="text-sm text-ash transition group-hover:text-paper">
             Soroban
           </p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             {meta.title}
           </h1>
         </Link>
-        <div className="flex flex-wrap items-center gap-2 font-mono text-sm">
-          <button
-            type="button"
-            onClick={() => openHowToPlay()}
-            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
-          >
-            How to
-          </button>
-          <SoundToggle />
-          <Link
-            href="/settings"
-            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-paper hover:text-paper"
-          >
-            Settings
-          </Link>
-          <Link
-            href="/play/race"
-            className="rounded-full border border-smoke bg-ink-soft/80 px-3 py-2 text-[11px] uppercase tracking-[0.18em] text-ash transition hover:border-lacquer hover:text-lacquer"
-          >
-            Race
-          </Link>
-          <Stat label="score" value={score} />
-          {mode !== "practice" && (
-            <Stat
-              label="time"
-              value={`${secondsLeft}s`}
-              hot={secondsLeft <= 15}
-            />
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          {!running && (
+            <button
+              type="button"
+              onClick={() => openHowToPlay()}
+              className="rounded-full border border-smoke bg-ink-soft/80 px-4 py-2 text-ash transition hover:border-paper hover:text-paper"
+            >
+              How to play
+            </button>
           )}
-          <Stat label="streak" value={streak} />
+          <SoundToggle />
+          {running && (
+            <>
+              <Stat label="Score" value={score} />
+              {mode !== "practice" && (
+                <Stat
+                  label="Time"
+                  value={`${secondsLeft}s`}
+                  hot={secondsLeft <= 15}
+                />
+              )}
+            </>
+          )}
         </div>
       </header>
 
       {!running && !finished && (
-        <section className="animate-rise mx-auto mt-10 max-w-xl text-center">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-lacquer">
-            {meta.eyebrow}
-            {mode === "daily" ? ` · ${formatDayLabel()}` : ""}
-          </p>
-          <h2 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-            {mode === "daily" ? (
-              <>
-                Today’s beads.
-                <span className="block text-lacquer">One shared run.</span>
-              </>
-            ) : mode === "practice" ? (
-              <>
-                No clock.
-                <span className="block text-lacquer">Just the beam.</span>
-              </>
-            ) : (
-              <>
-                Set the beads.
-                <span className="block text-lacquer">Bank the points.</span>
-              </>
-            )}
+        <section className="animate-rise mx-auto mt-8 max-w-lg text-center">
+          <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+            {mode === "daily"
+              ? "Today’s puzzle"
+              : mode === "practice"
+                ? "Practice mode"
+                : "Ready to play?"}
           </h2>
-          <p className="mt-4 text-ash">{meta.blurb}</p>
+          <p className="mt-4 text-lg text-ash">{meta.blurb}</p>
           {alreadyDidDaily && (
-            <p className="mt-3 font-mono text-sm text-amber">
-              You already posted {stats.lastDailyScore} today — play again to
-              improve.
+            <p className="mt-3 text-base text-amber">
+              You scored {stats.lastDailyScore} today. Try again to beat it!
             </p>
-          )}
-          {mode === "daily" && (
-            <div className="mt-4 flex justify-center">
-              <DailyResetClock />
-            </div>
           )}
 
           {(mode === "timed" || mode === "practice") && (
-            <div className="mt-8 space-y-4">
+            <div className="mt-8 space-y-5">
+              <p className="text-sm text-ash">Pick a level</p>
               <div className="flex flex-wrap justify-center gap-3">
                 {(["easy", "medium", "hard"] as Difficulty[]).map((level) => {
                   const metaLevel = DIFFICULTY_META[level];
@@ -451,33 +396,26 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
                         playSound("bead");
                       }}
                       className={[
-                        "min-w-[7.5rem] rounded-2xl border px-4 py-3 text-left transition",
+                        "min-w-[6.5rem] rounded-full border px-5 py-3 text-base transition",
                         active
                           ? "border-lacquer bg-lacquer/10 text-lacquer"
                           : "border-smoke bg-ink-soft text-paper hover:border-amber/60",
                       ].join(" ")}
                     >
-                      <p className="text-sm font-medium uppercase tracking-[0.18em]">
-                        {metaLevel.label}
-                      </p>
-                      <p className="mt-1 font-mono text-[11px] text-ash">
-                        {metaLevel.points} pts base
-                      </p>
+                      {metaLevel.label}
                     </button>
                   );
                 })}
               </div>
-              <p className="text-center text-sm text-ash">
+              <p className="text-sm text-ash">
                 {DIFFICULTY_META[difficulty].detail}
               </p>
               <button
                 type="button"
                 onClick={() => startGame(difficulty)}
-                className="rounded-full bg-lacquer px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] text-white transition hover:bg-lacquer-deep"
+                className="rounded-full bg-lacquer px-10 py-4 text-base font-medium text-white transition hover:bg-lacquer-deep"
               >
-                {mode === "timed"
-                  ? `Start ${ROUND_SECONDS}s · ${DIFFICULTY_META[difficulty].label}`
-                  : `Start practice · ${DIFFICULTY_META[difficulty].label}`}
+                {mode === "timed" ? "Start" : "Start practice"}
               </button>
             </div>
           )}
@@ -486,59 +424,36 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             <button
               type="button"
               onClick={() => startGame()}
-              className="mt-8 rounded-full bg-lacquer px-8 py-3 text-sm font-medium uppercase tracking-[0.2em] text-white transition hover:bg-lacquer-deep"
+              className="mt-8 rounded-full bg-lacquer px-10 py-4 text-base font-medium text-white transition hover:bg-lacquer-deep"
             >
-              Start daily
+              Start
             </button>
           )}
 
-          <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm">
-            {mode !== "daily" && (
-              <Link
-                href="/play/daily"
-                className="text-amber underline-offset-4 hover:underline"
-              >
-                Daily challenge
+          <div className="mt-10 flex flex-wrap justify-center gap-5 text-base">
+            {mode !== "timed" && (
+              <Link href="/play" className="text-ash hover:text-amber">
+                Timed play
               </Link>
             )}
             {mode !== "practice" && (
-              <Link
-                href="/play/practice"
-                className="text-ash underline-offset-4 hover:text-paper hover:underline"
-              >
-                Practice mode
+              <Link href="/play/practice" className="text-ash hover:text-amber">
+                Practice
               </Link>
             )}
-            {mode !== "timed" && (
-              <Link
-                href="/play"
-                className="text-ash underline-offset-4 hover:text-paper hover:underline"
-              >
-                Timed arena
+            {mode !== "daily" && (
+              <Link href="/play/daily" className="text-ash hover:text-amber">
+                Today’s puzzle
               </Link>
             )}
-            <Link
-              href="/play/race"
-              className="text-ash underline-offset-4 hover:text-paper hover:underline"
-            >
-              Race a rival
-            </Link>
           </div>
-
-          <StatsPanel />
-          <RecentRuns />
-          <AchievementsPanel />
         </section>
       )}
 
       {running && problem && (
         <section className="animate-rise flex flex-1 flex-col items-center gap-6">
           <div className="text-center">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-ash">
-              {mode === "daily"
-                ? `Daily · problem ${Math.max(problemIndex, 1)}`
-                : "Make this sum"}
-            </p>
+            <p className="text-sm text-ash">Make this number</p>
             <p
               className={[
                 "mt-2 font-mono text-4xl font-semibold tracking-tight sm:text-5xl",
@@ -547,8 +462,8 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             >
               {formatProblem(problem)}
             </p>
-            <p className="mt-3 font-mono text-sm text-ash">
-              abacus reads{" "}
+            <p className="mt-3 text-base text-ash">
+              Your beads:{" "}
               <span className={matched ? "text-amber" : "text-paper"}>
                 {value}
               </span>
@@ -561,20 +476,18 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
             matched={matched}
           />
 
-          <ProblemHistory entries={history} />
-
           <div className="flex flex-wrap justify-center gap-3">
             <button
               type="button"
               onClick={resetBoard}
-              className="rounded-full border border-smoke px-4 py-2 text-sm text-ash transition hover:border-paper hover:text-paper"
+              className="rounded-full border border-smoke px-5 py-2.5 text-base text-ash transition hover:border-paper hover:text-paper"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={skipProblem}
-              className="rounded-full border border-smoke px-4 py-2 text-sm text-ash transition hover:border-paper hover:text-paper"
+              className="rounded-full border border-smoke px-5 py-2.5 text-base text-ash transition hover:border-paper hover:text-paper"
             >
               Skip
             </button>
@@ -582,9 +495,9 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
               <button
                 type="button"
                 onClick={finishRound}
-                className="rounded-full border border-lacquer/50 px-4 py-2 text-sm text-lacquer transition hover:bg-lacquer/10"
+                className="rounded-full border border-lacquer/50 px-5 py-2.5 text-base text-lacquer transition hover:bg-lacquer/10"
               >
-                End session
+                Done
               </button>
             )}
           </div>
@@ -592,80 +505,65 @@ export function GameClient({ mode = "timed" }: GameClientProps) {
       )}
 
       {finished && (
-        <section className="animate-rise mx-auto mt-8 w-full max-w-lg text-center">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-ash">
-            {mode === "practice" ? "Session over" : "Round over"}
-          </p>
-          <h2 className="mt-2 text-5xl font-semibold text-amber">{score}</h2>
+        <section className="animate-rise mx-auto mt-6 w-full max-w-md text-center">
+          <p className="text-base text-ash">Nice work!</p>
+          <h2 className="mt-2 text-6xl font-semibold text-amber">{score}</h2>
           {newBest && (
-            <p className="mt-2 font-mono text-sm text-lacquer">
-              New personal best
-            </p>
+            <p className="mt-2 text-base text-lacquer">New best score!</p>
           )}
           {freshAchievements.length > 0 && (
-            <ul className="mt-3 space-y-1 font-mono text-sm text-amber">
+            <ul className="mt-3 space-y-1 text-base text-amber">
               {freshAchievements.map((id) => {
                 const item = ACHIEVEMENTS.find((a) => a.id === id);
-                return <li key={id}>Unlocked · {item?.title ?? id}</li>;
+                return <li key={id}>Badge: {item?.title ?? id}</li>;
               })}
             </ul>
           )}
-          <p className="mt-2 text-ash">
-            {solved} solved
-            {mode === "daily"
-              ? " on daily"
-              : mode === "practice"
-                ? " in practice"
-                : ` on ${difficulty}`}
-          </p>
+          <p className="mt-2 text-ash">{solved} correct</p>
           {mode !== "practice" && (
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3">
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your name"
                 maxLength={16}
-                className="flex-1 rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center outline-none focus:border-amber"
+                className="rounded-full border border-smoke bg-ink-soft px-4 py-3 text-center text-base outline-none focus:border-amber"
               />
               <button
                 type="button"
                 onClick={() => void submitScore()}
                 disabled={saving}
-                className="rounded-full bg-lacquer px-5 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white transition hover:bg-lacquer-deep disabled:opacity-60"
+                className="rounded-full bg-lacquer px-5 py-3 text-base font-medium text-white transition hover:bg-lacquer-deep disabled:opacity-60"
               >
-                {saving ? "Saving…" : "Save score"}
+                {saving ? "Saving…" : "Save my score"}
               </button>
             </div>
           )}
           {saveMessage && <p className="mt-3 text-sm text-ash">{saveMessage}</p>}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => startGame(difficulty)}
+              className="rounded-full bg-lacquer px-8 py-3 text-base font-medium text-white transition hover:bg-lacquer-deep"
+            >
+              Play again
+            </button>
             <ShareScoreButton
               score={score}
               solved={solved}
               modeLabel={
                 mode === "daily"
-                  ? "Daily"
+                  ? "Today"
                   : mode === "practice"
                     ? "Practice"
-                    : `Timed ${difficulty}`
+                    : `Play ${difficulty}`
               }
             />
-            <button
-              type="button"
-              onClick={() => startGame(difficulty)}
-              className="text-sm text-ash underline-offset-4 hover:text-paper hover:underline"
-            >
-              Play again
-            </button>
           </div>
-          <StatsPanel />
-          <RecentRuns />
-          <AchievementsPanel />
+          {mode !== "practice" && (
+            <Leaderboard defaultFilter={mode === "daily" ? "day" : "week"} />
+          )}
         </section>
-      )}
-
-      {mode !== "practice" && (
-        <Leaderboard defaultFilter={mode === "daily" ? "daily" : "week"} />
       )}
     </div>
   );
@@ -681,9 +579,11 @@ function Stat({
   hot?: boolean;
 }) {
   return (
-    <div className="min-w-[70px] rounded-xl border border-smoke bg-ink-soft/80 px-3 py-2 text-center backdrop-blur">
-      <p className="text-[10px] uppercase tracking-[0.2em] text-ash">{label}</p>
-      <p className={hot ? "text-lacquer" : "text-paper"}>{value}</p>
+    <div className="min-w-[72px] rounded-2xl border border-smoke bg-ink-soft/80 px-3 py-2 text-center">
+      <p className="text-xs text-ash">{label}</p>
+      <p className={`text-lg font-medium ${hot ? "text-lacquer" : "text-paper"}`}>
+        {value}
+      </p>
     </div>
   );
 }
