@@ -103,7 +103,7 @@ const STEPS: Step[] = [
   {
     kind: "done",
     title: "You’re ready!",
-    body: "Pick a mode and start. You can open this guide again anytime.",
+    body: "Start with Practice (no timer), then try a timed game when you feel ready.",
   },
 ];
 
@@ -177,25 +177,25 @@ export function HowToPlay() {
         {current.kind === "done" && (
           <div className="mt-5 flex flex-wrap gap-2">
             <Link
-              href="/play/daily"
+              href="/play/practice"
               onClick={() => closeHowToPlay(true)}
-              className="rounded-full bg-lacquer px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] text-white transition hover:bg-lacquer-deep"
+              className="rounded-full bg-lacquer px-4 py-2 text-sm font-medium text-white transition hover:bg-lacquer-deep"
             >
-              Daily
+              Practice first
             </Link>
             <Link
               href="/play"
               onClick={() => closeHowToPlay(true)}
-              className="rounded-full border border-smoke px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] text-paper transition hover:border-amber hover:text-amber"
+              className="rounded-full border border-smoke px-4 py-2 text-sm text-paper transition hover:border-amber hover:text-amber"
             >
-              Timed
+              Timed play
             </Link>
             <Link
-              href="/play/practice"
+              href="/play/daily"
               onClick={() => closeHowToPlay(true)}
-              className="rounded-full border border-smoke px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] text-ash transition hover:border-paper hover:text-paper"
+              className="rounded-full border border-smoke px-4 py-2 text-sm text-ash transition hover:border-paper hover:text-paper"
             >
-              Practice
+              Today
             </Link>
           </div>
         )}
