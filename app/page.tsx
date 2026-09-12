@@ -5,9 +5,14 @@ import { SiteNav } from "@/components/SiteNav";
 
 const MODES = [
   {
+    href: "/play/practice",
+    label: "Practice first",
+    detail: "No timer. Learn the beads calmly.",
+  },
+  {
     href: "/play",
-    label: "Play",
-    detail: "90 seconds. Slide beads. Get points.",
+    label: "Timed play",
+    detail: "90 seconds. Easy, medium, or hard.",
   },
   {
     href: "/play/daily",
@@ -50,15 +55,21 @@ export default function HomePage() {
 
           <div className="animate-rise-late mt-10 flex flex-wrap items-center gap-3">
             <Link
-              href="/play"
+              href="/play/practice"
               className="rounded-full bg-lacquer px-9 py-4 text-base font-medium text-white transition hover:bg-lacquer-deep"
             >
-              Start playing
+              Practice first
             </Link>
-            <HowToPlayButton className="rounded-full border border-smoke px-7 py-4 text-base text-paper transition hover:border-amber hover:text-amber" />
+            <Link
+              href="/play"
+              className="rounded-full border border-smoke px-7 py-4 text-base text-paper transition hover:border-amber hover:text-amber"
+            >
+              Timed play
+            </Link>
+            <HowToPlayButton className="rounded-full border border-smoke px-7 py-4 text-base text-ash transition hover:border-paper hover:text-paper" />
           </div>
 
-          <div className="animate-rise-late mt-14 grid gap-4 sm:grid-cols-3">
+          <div className="animate-rise-late mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {MODES.map((mode) => (
               <Link
                 key={mode.href}
