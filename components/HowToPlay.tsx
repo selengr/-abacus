@@ -1,17 +1,24 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import Link from "next/link";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { AbacusBoard } from "@/components/AbacusBoard";
+import { abacusValue, emptyRods, type RodState } from "@/lib/abacus";
+import { playSound } from "@/lib/sound";
 
 const STORAGE_KEY = "soroban-howto-seen-v1";
 const CHANGE_EVENT = "soroban-howto-changed";
+const TRY_TARGET = 7;
 
 type HowToState = {
   forceOpen: boolean;
+  sessionDismissed: boolean;
   step: number;
 };
 
 const state: HowToState = {
   forceOpen: false,
+  sessionDismissed: false,
   step: 0,
 };
 
@@ -23,6 +30,7 @@ function emit() {
 
 export function openHowToPlay() {
   state.forceOpen = true;
+  state.sessionDismissed = false;
   state.step = 0;
   emit();
 }
@@ -32,7 +40,14 @@ export function closeHowToPlay(markSeen = true) {
   state.step = 0;
   if (markSeen && typeof window !== "undefined") {
     window.localStorage.setItem(STORAGE_KEY, "1");
+  } else {
+    state.sessionDismissed = true;
   }
+  emit();
+}
+
+function setStep(next: number) {
+  state.step = Math.max(0, next);
   emit();
 }
 
@@ -51,7 +66,7 @@ function getSnapshot() {
   const seen =
     typeof window !== "undefined" &&
     window.localStorage.getItem(STORAGE_KEY) === "1";
-  const open = state.forceOpen || !seen;
+  const open = state.forceOpen || (!seen && !state.sessionDismissed);
   return JSON.stringify({ open, step: state.step });
 }
 
@@ -59,22 +74,36 @@ function getServerSnapshot() {
   return JSON.stringify({ open: false, step: 0 });
 }
 
-const STEPS = [
+type Step =
+  | { kind: "text"; title: string; body: string }
+  | { kind: "try"; title: string; body: string }
+  | { kind: "done"; title: string; body: string };
+
+const STEPS: Step[] = [
   {
+    kind: "text",
     title: "Heaven bead = 5",
     body: "The single bead above the beam is worth five. Tap it toward the beam to count it.",
   },
   {
+    kind: "text",
     title: "Earth beads = 1",
     body: "The four beads below the beam are worth one each. Slide them up to the beam to add.",
   },
   {
-    title: "Read the rods",
-    body: "Rods are place values from left to right: ten-thousands down to ones. Match the sum on the board.",
+    kind: "try",
+    title: "Make it read 7",
+    body: "Heaven (5) plus two earth beads (2). Match 7 on the ones rod to unlock Next.",
   },
   {
+    kind: "text",
     title: "Keyboard shortcuts",
     body: "Arrow keys pick a rod. Keys 0-4 set earth beads. H or 5 toggles the heaven bead.",
+  },
+  {
+    kind: "done",
+    title: "You’re ready",
+    body: "Pick a mode and trust your hands. You can reopen this guide anytime.",
   },
 ];
 
@@ -88,11 +117,17 @@ export function HowToPlay() {
     open: boolean;
     step: number;
   };
+  const [rods, setRods] = useState<RodState[]>(() => emptyRods(1));
+  const value = useMemo(() => abacusValue(rods), [rods]);
+  const matched = value === TRY_TARGET;
 
   if (!open) return null;
 
-  const current = STEPS[Math.min(step, STEPS.length - 1)] ?? STEPS[0];
-  const last = step >= STEPS.length - 1;
+  const index = Math.min(step, STEPS.length - 1);
+  const current = STEPS[index] ?? STEPS[0];
+  const last = index >= STEPS.length - 1;
+  const tryStep = current.kind === "try";
+  const canAdvance = !tryStep || matched;
 
   return (
     <div
@@ -101,9 +136,9 @@ export function HowToPlay() {
       aria-modal="true"
       aria-labelledby="howto-title"
     >
-      <div className="animate-rise w-full max-w-md rounded-3xl border border-smoke bg-ink-soft p-6 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
+      <div className="animate-rise max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-smoke bg-ink-soft p-6 shadow-[0_30px_80px_rgba(0,0,0,0.55)]">
         <p className="text-[11px] uppercase tracking-[0.3em] text-ash">
-          How to play · {Math.min(step, STEPS.length - 1) + 1}/{STEPS.length}
+          How to play · {index + 1}/{STEPS.length}
         </p>
         <h2
           id="howto-title"
@@ -113,39 +148,102 @@ export function HowToPlay() {
         </h2>
         <p className="mt-3 text-ash">{current.body}</p>
 
+        {tryStep && (
+          <div className="mt-5 flex flex-col items-center gap-3">
+            <AbacusBoard
+              compact
+              rods={rods}
+              matched={matched}
+              onChange={(next) => {
+                const nextValue = abacusValue(next);
+                setRods(next);
+                if (nextValue === TRY_TARGET && value !== TRY_TARGET) {
+                  playSound("success");
+                } else {
+                  playSound("bead");
+                }
+              }}
+            />
+            <p className="font-mono text-sm text-ash">
+              reads{" "}
+              <span className={matched ? "text-amber" : "text-paper"}>
+                {value}
+              </span>
+              {matched ? " · nice" : ` · aim for ${TRY_TARGET}`}
+            </p>
+          </div>
+        )}
+
+        {current.kind === "done" && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Link
+              href="/play/daily"
+              onClick={() => closeHowToPlay(true)}
+              className="rounded-full bg-lacquer px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] text-white transition hover:bg-lacquer-deep"
+            >
+              Daily
+            </Link>
+            <Link
+              href="/play"
+              onClick={() => closeHowToPlay(true)}
+              className="rounded-full border border-smoke px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] text-paper transition hover:border-amber hover:text-amber"
+            >
+              Timed
+            </Link>
+            <Link
+              href="/play/practice"
+              onClick={() => closeHowToPlay(true)}
+              className="rounded-full border border-smoke px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] text-ash transition hover:border-paper hover:text-paper"
+            >
+              Practice
+            </Link>
+          </div>
+        )}
+
         <div className="mt-6 flex h-2 gap-2">
-          {STEPS.map((_, index) => (
+          {STEPS.map((_, i) => (
             <span
-              key={index}
+              key={i}
               className={[
                 "h-full flex-1 rounded-full transition",
-                index <= step ? "bg-lacquer" : "bg-smoke",
+                i <= index ? "bg-lacquer" : "bg-smoke",
               ].join(" ")}
             />
           ))}
         </div>
 
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => closeHowToPlay(true)}
+            onClick={() => closeHowToPlay(false)}
             className="rounded-full border border-smoke px-4 py-3 text-sm text-ash transition hover:border-paper hover:text-paper"
           >
             Skip
           </button>
+          {index > 0 && (
+            <button
+              type="button"
+              onClick={() => setStep(index - 1)}
+              className="rounded-full border border-smoke px-4 py-3 text-sm text-ash transition hover:border-paper hover:text-paper"
+            >
+              Back
+            </button>
+          )}
           <button
             type="button"
+            disabled={!canAdvance}
             onClick={() => {
               if (last) {
                 closeHowToPlay(true);
                 return;
               }
-              state.step += 1;
-              emit();
+              if (tryStep) setRods(emptyRods(1));
+              setStep(index + 1);
+              playSound("tick");
             }}
-            className="flex-1 rounded-full bg-lacquer px-4 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white transition hover:bg-lacquer-deep"
+            className="flex-1 rounded-full bg-lacquer px-4 py-3 text-sm font-medium uppercase tracking-[0.18em] text-white transition hover:bg-lacquer-deep disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {last ? "Got it" : "Next"}
+            {last ? "Got it" : tryStep && !matched ? "Match 7 first" : "Next"}
           </button>
         </div>
       </div>
